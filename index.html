@@ -102,15 +102,18 @@ main{grid-template-columns:1fr}
     <div><label for="roomShape">Rumsform</label><select id="roomShape"><option value="rect">Rektangulärt</option><option value="L">L-format golv</option></select></div>
     <div><label for="roomW">Bredd (mm)</label><input id="roomW" type="number" min="1" value="3000"></div>
     <div id="lengthField"><label for="roomL">Längd (mm)</label><input id="roomL" type="number" min="1" value="4000"></div>
+    <div><label for="roomH">Takhöjd (mm)</label><input id="roomH" type="number" min="1" value="2400"></div>
+    <div id="activeWallField"><label for="activeWall">Aktiv vägg</label><select id="activeWall"><option value="A">Vägg A – bredd</option><option value="B">Vägg B – längd</option><option value="C">Vägg C – bredd</option><option value="D">Vägg D – längd</option></select></div>
     <div id="notchWField" class="hidden"><label for="notchW">Urtagets bredd (mm)</label><input id="notchW" type="number" min="0" value="1000"></div>
     <div id="notchHField" class="hidden"><label for="notchH">Urtagets höjd (mm)</label><input id="notchH" type="number" min="0" value="1500"></div>
   </div>
   <h3>Arbetsvy</h3>
   <div class="tabs">
-    <button id="floorTab" class="active" type="button">Golvvy</button>
+    <button id="floorTab" type="button">Golvvy</button>
     <button id="wallTab" type="button">Väggvy</button>
+    <button id="roomTab" class="active" type="button">Helrum</button>
   </div>
-  <p class="hint">Golvobjekt placeras med X/Y från övre vänstra hörnet. Väggobjekt använder X från vänster och Y från golv i måttfälten.</p>
+  <p class="hint">Ange rummets bredd, längd och takhöjd en gång. Helrum visar golvet och alla fyra väggar i samma ritning. Väggobjekt kan placeras på vägg A–D.</p>
 </section>
 <section class="card" id="tileCard">
   <h2>Platta och fog</h2>
@@ -122,12 +125,13 @@ main{grid-template-columns:1fr}
   </div>
   <h3>Läggningsläge</h3>
   <div class="fieldgrid">
-    <div><label for="layoutMode">Startläge</label><select id="layoutMode"><option value="auto">Automatiskt – färre småbitar</option><option value="center">Centrerat</option><option value="drain">Centrera platta på golvbrunn</option><option value="manual">Manuell förskjutning</option></select></div>
+    <div><label for="layoutMode">Startläge</label><select id="layoutMode"><option value="auto">Automatiskt – färre småbitar</option><option value="center">Centrerat</option><option value="drain">Foglinje genom golvbrunnens centrum</option><option value="manual">Manuell förskjutning</option></select></div>
     <div><label for="offset">Förskjutning X (mm)</label><input id="offset" type="number" value="0"></div>
     <div><label for="offsetY">Förskjutning Y (mm)</label><input id="offsetY" type="number" value="0"></div>
     <div><label for="pattern">Läggningsmönster</label><select id="pattern"><option value="grid">Rakt förband</option><option value="half">Halvförband</option><option value="third">Tredjedelsförband</option><option value="diagonal">Diagonal 45°</option></select></div>
   </div>
-  <p class="hint">Förskjutningen påverkar foglinjernas läge. Automatläget testar olika startlägen och försöker minska smala kantbitar.</p>
+  <div class="actions no-print" style="margin-top:10px"><button id="drainAlign" type="button">Centrera fog på golvbrunn</button></div>
+  <p class="hint">Förskjutningen påverkar foglinjernas läge. Automatläget försöker minska smala kantbitar. Fogcentrering innebär att en foglinje går genom brunnens centrum.</p>
 </section>
 <section class="card wide" id="drawingCard">
   <div class="row" style="justify-content:space-between">
@@ -162,7 +166,7 @@ main{grid-template-columns:1fr}
   <div id="wallAdd" class="fieldgrid hidden">
     <button data-add="fonster">＋ Fönster</button><button data-add="dorr">＋ Dörr</button><button data-add="trumma">＋ Trumma</button><button data-add="horn">＋ Ytterhörn</button>
   </div>
-  <h3>Objekt i aktuell vy</h3>
+  <h3>Objekt i vald vy / helrum</h3>
   <div id="objectList" class="objectlist"></div>
   <div id="editor" class="hidden">
     <h3>Redigera valt objekt</h3>
@@ -172,6 +176,7 @@ main{grid-template-columns:1fr}
       <div><label for="objY">Y (mm)</label><input id="objY" type="number"></div>
       <div><label for="objW">Bredd / diameter (mm)</label><input id="objW" type="number" min="1"></div>
       <div><label for="objH">Höjd / djup (mm)</label><input id="objH" type="number" min="1"></div>
+      <div id="objWallSideField" class="hidden"><label for="objWallSide">Placering på vägg</label><select id="objWallSide"><option value="A">Vägg A</option><option value="B">Vägg B</option><option value="C">Vägg C</option><option value="D">Vägg D</option></select></div>
       <div id="objHeightField" class="hidden"><label for="objHeight">Trummans höjd (mm)</label><input id="objHeight" type="number" min="1" value="2400"></div>
     </div>
     <div class="actions" style="margin-top:10px"><button id="deleteSelected" class="danger" type="button">Ta bort valt objekt</button></div>
@@ -194,7 +199,7 @@ main{grid-template-columns:1fr}
     <div class="metric"><span>Fixsäckar</span><strong id="bagsMetric">3</strong></div>
     <div class="metric"><span>Fogmassa, grov uppskattning</span><strong id="groutMetric">0,00 kg</strong></div>
   </div>
-  <p class="hint">Materialytan är bruttoyta för den aktuella rektangulära vyn. Öppningar, trummor och urtag dras inte automatiskt av i denna första version. Fogmassa är en uppskattning, kontrollera produktens åtgång.</p>
+  <p class="hint">Helrum summerar golv och fyra väggar. Öppningar dras av som uppskattning; överlappande hinder och L-formade väggytor behöver kontrolleras manuellt. Fogmassa är en uppskattning, kontrollera produktens åtgång.</p>
   <div id="cutWarning" class="notice" style="margin-top:10px"></div>
 </section>
 <section id="printSummary" class="card hidden"></section>
@@ -214,10 +219,11 @@ main{grid-template-columns:1fr}
 <script>
 (() => {
 const $=id=>document.getElementById(id);
-const fields=['projectName','roomShape','roomW','roomL','notchW','notchH','tileW','tileH','joint','minCut','layoutMode','offset','offsetY','pattern','waste','tilesBox','fixRate','bagSize','groutDepth'];
-let view='floor', selectedId=null, nextId=1, objects=[];
+const drawing=$('drawing');
+const fields=['projectName','roomShape','roomW','roomL','roomH','activeWall','notchW','notchH','tileW','tileH','joint','minCut','layoutMode','offset','offsetY','pattern','waste','tilesBox','fixRate','bagSize','groutDepth'];
+let view='room', selectedId=null, nextId=1, objects=[];
 let zoomLevel=1, zoomCenter={x:360,y:235}, panState=null, pinchState=null, touchPoints=new Map();
-let undoStack=[], redoStack=[], autoSaveTimer=null, editBeforeState=null;
+let undoStack=[], redoStack=[], autoSaveTimer=null, editBeforeState=null, restoringState=false;
 const names={brunn:'Golvbrunn',ror:'Rör / genomföring',pelare:'Pelare / hinder',fonster:'Fönster',dorr:'Dörr',trumma:'Trumma',horn:'Ytterhörn'};
 const colors={brunn:'#4b6475',ror:'#168aad',pelare:'#64748b',fonster:'#7dd3fc',dorr:'#a7f3d0',trumma:'#f59e0b',horn:'#dc2626'};
 const num=id=>Math.max(0,Number($(id).value)||0);
@@ -250,9 +256,9 @@ function currentOffset(R,T,J,axis='x'){
  const mode=val('layoutMode'), field=axis==='y'?'offsetY':'offset', pitch=T+J;
  if(mode==='manual')return ((Number(val(field))%pitch)+pitch)%pitch;
  if(mode==='center')return pitch/2;
- if(mode==='drain'&&view==='floor'){
+ if(mode==='drain'&&(view==='floor'||view==='room')){
   const drain=objects.find(o=>o.view==='floor'&&o.type==='brunn');
-  if(drain){const pos=axis==='y'?drain.y:drain.x;return ((pos-pitch/2)%pitch+pitch)%pitch;}
+  if(drain){const pos=axis==='y'?Number(drain.y)||0:Number(drain.x)||0;return ((-pos%pitch)+pitch)%pitch;}
  }
  return bestOffset(R,T,J,num('minCut')).s;
 }
@@ -261,7 +267,8 @@ function floorOutline(x,y,w,h,notchW,notchH,shape){
  return `M ${x} ${y} H ${x+w} V ${y+h} H ${x} Z`;
 }
 function draw(){
- const svg=$('drawing'), W=positive('roomW'), H=positive('roomL'), TW=positive('tileW'), TH=positive('tileH'), J=num('joint');
+ if(view==='room'){drawRoomOverview();return;}
+ const svg=$('drawing'), W=view==='wall'&&['B','D'].includes(val('activeWall'))?positive('roomL'):positive('roomW'), H=view==='wall'?positive('roomH'):positive('roomL'), TW=positive('tileW'), TH=positive('tileH'), J=num('joint');
  const shape=val('roomShape'), nw=Math.min(W,num('notchW')), nh=Math.min(H,num('notchH'));
  const sw=620/W, sh=365/H, s=Math.min(sw,sh), dw=W*s,dh=H*s, ox=(720-dw)/2, oy=35+(380-dh)/2;
  const R=W, T=TW, offset=currentOffset(R,TW,J,'x'), offsetY=currentOffset(H,TH,J,'y');
@@ -306,8 +313,8 @@ function draw(){
   }
   capPosY+=TH+J;
  }
- for(const o of objects.filter(o=>o.view===view)){
-  const x=ox+(o.x||0)*s,y=oy+(o.y||0)*s,w=Math.max(1,o.w||100)*s,h=Math.max(1,o.h||100)*s,stroke=o.id===selectedId?'#9a3412':'#263b34',swid=o.id===selectedId?3:1.5;
+ for(const o of objects.filter(o=>o.view===view&&(view!=='wall'||(o.wallSide||'A')===val('activeWall')))){
+  const x=ox+(o.x||0)*s,y=oy+(view==='wall'?H-(o.y||0)-(o.h||0):(o.y||0))*s,w=Math.max(1,o.w||100)*s,h=Math.max(1,o.h||100)*s,stroke=o.id===selectedId?'#9a3412':'#263b34',swid=o.id===selectedId?3:1.5;
   if(o.type==='brunn'||o.type==='ror')markup+=`<circle data-object-id="${o.id}" cx="${x}" cy="${y}" r="${Math.max(4,(o.w||100)*s/2)}" fill="${colors[o.type]}" stroke="${stroke}" stroke-width="${swid}" style="cursor:pointer"/><circle data-object-id="${o.id}" cx="${x}" cy="${y}" r="${Math.max(1,(o.w||100)*s/5)}" fill="#fff" style="cursor:pointer"/>`;
   else if(o.type==='horn')markup+=`<line data-object-id="${o.id}" x1="${x}" y1="${oy}" x2="${x}" y2="${oy+dh}" stroke="${colors.horn}" stroke-width="4" stroke-dasharray="8 5" style="cursor:pointer"/>`;
   else markup+=`<rect data-object-id="${o.id}" x="${x}" y="${y}" width="${w}" height="${h}" fill="${colors[o.type]}" fill-opacity=".85" stroke="${stroke}" stroke-width="${swid}" style="cursor:pointer"/>`;
@@ -319,20 +326,58 @@ function draw(){
  svg.innerHTML=markup;
  applyZoomViewBox();
  const cuts=cutsFor(W,TW,J,offset), min=num('minCut'), small=cuts.filter(c=>c<min);
- $('drawingStatus').textContent=`${view==='floor'?'Golv':'Vägg'} · platta ${TW} × ${TH} mm · fog ${J} mm · förskjutning X ${Math.round(offset)} mm, Y ${Math.round(offsetY)} mm. Kantkapningar längs bredden: ${cuts.join(', ')} mm.`;
+ $('drawingStatus').textContent=`${view==='floor'?'Golv':`Vägg ${val('activeWall')}`} · ${W} × ${H} mm · platta ${TW} × ${TH} mm · fog ${J} mm · förskjutning X ${Math.round(offset)} mm, Y ${Math.round(offsetY)} mm. Kantkapningar längs bredden: ${cuts.join(', ')} mm.`;
  updateMaterials(small,cuts);
 }
+function drawRoomOverview(){
+ const svg=$('drawing'),W=positive('roomW'),L=positive('roomL'),RH=positive('roomH'),TW=positive('tileW'),TH=positive('tileH'),J=num('joint');
+ const pX=TW+J,pY=TH+J;
+ let m=`<rect width="720" height="470" rx="10" fill="#f8faf8"/><text x="18" y="25" font-size="14" font-weight="700" fill="#263b34">HELRUM · golv + fyra väggar</text>`;
+ // Floor plan panel.
+ const fx=18,fy=104,fw=305,fh=300,fs=Math.min(fw/W,fh/L),fdw=W*fs,fdh=L*fs,fox=fx+(fw-fdw)/2,foy=fy+(fh-fdh)/2;
+ m+=`<text x="${fx}" y="52" font-size="12" font-weight="700" fill="#263b34">GOLV · ${W} × ${L} mm</text><rect x="${fox}" y="${foy}" width="${fdw}" height="${fdh}" fill="#e8e8e1" stroke="#263b34" stroke-width="2"/>`;
+ const offX=currentOffset(W,TW,J,'x'),offY=currentOffset(L,TH,J,'y');
+ for(let x=fox-((offX*fs)%(pX*fs));x<fox+fdw+1;x+=pX*fs)m+=`<line x1="${x}" y1="${foy}" x2="${x}" y2="${foy+fdh}" stroke="#87958d" stroke-width="1"/>`;
+ for(let y=foy-((offY*fs)%(pY*fs));y<foy+fdh+1;y+=pY*fs)m+=`<line x1="${fox}" y1="${y}" x2="${fox+fdw}" y2="${y}" stroke="#87958d" stroke-width="1"/>`;
+ for(const o of objects.filter(o=>o.view==='floor')){
+  const x=fox+(o.x||0)*fs,y=foy+(o.y||0)*fs,w=Math.max(1,o.w||100)*fs,h=Math.max(1,o.h||100)*fs,stroke=o.id===selectedId?'#9a3412':'#263b34';
+  if(o.type==='brunn'||o.type==='ror')m+=`<circle data-object-id="${o.id}" cx="${x}" cy="${y}" r="${Math.max(3,(o.w||100)*fs/2)}" fill="${colors[o.type]}" stroke="${stroke}" stroke-width="2"/>`;
+  else m+=`<rect data-object-id="${o.id}" x="${x}" y="${y}" width="${w}" height="${h}" fill="${colors[o.type]}" fill-opacity=".85" stroke="${stroke}" stroke-width="1.5"/>`;
+ }
+ // Four wall elevations in a 2x2 panel layout.
+ const panels=[
+  {side:'A',x:352,y:54,w:164,h:135,wallW:W,label:`VÄGG A · ${W} mm`},
+  {side:'B',x:536,y:54,w:164,h:135,wallW:L,label:`VÄGG B · ${L} mm`},
+  {side:'C',x:352,y:226,w:164,h:135,wallW:W,label:`VÄGG C · ${W} mm`},
+  {side:'D',x:536,y:226,w:164,h:135,wallW:L,label:`VÄGG D · ${L} mm`}
+ ];
+ for(const q of panels){
+  const pad=6,labelY=q.y+13,px=q.x+5,py=q.y+25,pw=q.w-10,ph=q.h-35,sc=Math.min(pw/q.wallW,ph/RH),dw=q.wallW*sc,dh=RH*sc,ox=px+(pw-dw)/2,oy=py+(ph-dh)/2;
+  m+=`<text x="${q.x+2}" y="${labelY}" font-size="11" font-weight="700" fill="#263b34">${q.label}</text><rect x="${ox}" y="${oy}" width="${dw}" height="${dh}" fill="#e8e8e1" stroke="#263b34" stroke-width="1.5"/>`;
+  for(let x=ox;x<ox+dw+1;x+=pX*sc)m+=`<line x1="${x}" y1="${oy}" x2="${x}" y2="${oy+dh}" stroke="#87958d" stroke-width=".7"/>`;
+  for(let y=oy;y<oy+dh+1;y+=pY*sc)m+=`<line x1="${ox}" y1="${y}" x2="${ox+dw}" y2="${y}" stroke="#87958d" stroke-width=".7"/>`;
+  for(const o of objects.filter(o=>o.view==='wall'&&(o.wallSide||'A')===q.side)){
+   const x=ox+(o.x||0)*sc,y=oy+(RH-(o.y||0)-(o.h||0))*sc,w=Math.max(1,o.w||100)*sc,h=Math.max(1,o.h||100)*sc,stroke=o.id===selectedId?'#9a3412':'#263b34';
+   m+=`<rect data-object-id="${o.id}" x="${x}" y="${y}" width="${w}" height="${h}" fill="${colors[o.type]}" fill-opacity=".85" stroke="${stroke}" stroke-width="1.2"/>`;
+  }
+ }
+ m+=`<text x="352" y="390" font-size="10" fill="#64756b">Takhöjd: ${RH} mm · X mäts från vänster, Y från golv.</text><text x="352" y="410" font-size="10" fill="#64756b">Välj objekt i listan för att ändra placering och storlek.</text>`;
+ svg.innerHTML=m;applyZoomViewBox();
+ $('drawingStatus').textContent=`Helrum · golv ${W} × ${L} mm · takhöjd ${RH} mm · golv ${fmtArea(W*L)} m² · väggar ${fmtArea(2*(W+L)*RH)} m².`;
+ updateMaterials([],[]);
+}
+function fmtArea(mm2){return (mm2/1e6).toLocaleString('sv-SE',{maximumFractionDigits:2});}
 function escapeXml(s){return String(s).replace(/[<>&'"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;',"'":'&apos;','"':'&quot;'}[c]));}
 function updateMaterials(small,cuts){
- const W=positive('roomW'), H=positive('roomL'), TW=positive('tileW'), TH=positive('tileH'), J=num('joint');
- let gross=W*H;
- if(view==='floor'&&val('roomShape')==='L')gross=Math.max(0,W*H-Math.min(W,num('notchW'))*Math.min(H,num('notchH')));
+ const W=positive('roomW'), L=positive('roomL'), RH=positive('roomH'), TW=positive('tileW'), TH=positive('tileH'), J=num('joint');
+ let gross=view==='room'?(W*L+2*W*RH+2*L*RH):view==='wall'?((['B','D'].includes(val('activeWall'))?L:W)*RH):W*L;
+ if(view==='floor'&&val('roomShape')==='L')gross=Math.max(0,W*L-Math.min(W,num('notchW'))*Math.min(L,num('notchH')));
  let openings=0;
- for(const o of objects.filter(o=>o.view===view)){
-  if(view==='floor'){
+ for(const o of objects.filter(o=>view==='room'||o.view===view)){
+  if(o.view==='floor'&&(view==='floor'||view==='room')){
    if(o.type==='brunn'||o.type==='ror')openings+=Math.PI*Math.pow(Math.max(0,o.w||0)/2,2);
    else if(o.type==='pelare')openings+=Math.max(0,o.w||0)*Math.max(0,o.h||0);
-  }else if(o.type==='dorr'||o.type==='fonster'||o.type==='trumma'){
+  }else if(o.view==='wall'&&(view==='wall'||view==='room')&&(o.type==='dorr'||o.type==='fonster'||o.type==='trumma')){
    openings+=Math.max(0,o.w||0)*Math.max(0,o.h||0);
   }
  }
@@ -340,7 +385,7 @@ function updateMaterials(small,cuts){
  const tileArea=TW*TH/1e6;
  const patternWaste=val('pattern')==='diagonal'?1.15:val('pattern')==='half'||val('pattern')==='third'?1.05:1;
  const n=Math.ceil(area/tileArea*patternWaste), total=Math.ceil(n*(1+num('waste')/100)), box=Math.ceil(total/positive('tilesBox')), fix=area*num('fixRate'), bags=Math.ceil(fix/positive('bagSize'));
- const grout=area*((TW+TH)/(TW*TH))*J*positive('groutDepth')*1.6;
+ const grout=area*((TW+TH)/(TW*TH))*J*positive('groutDepth')*1.6/1000;
  const fmt=n=>Number(n).toLocaleString('sv-SE',{maximumFractionDigits:2});
  $('areaMetric').textContent=fmt(area)+' m²';$('tilesMetric').textContent=fmt(total);$('boxesMetric').textContent=fmt(box);$('fixMetric').textContent=fmt(fix)+' kg';$('bagsMetric').textContent=fmt(bags);$('groutMetric').textContent=fmt(grout)+' kg';
  $('cutWarning').className='notice '+(small.length?'':'good');
@@ -349,7 +394,7 @@ function updateMaterials(small,cuts){
 }
 function renderList(){
  const list=$('objectList');list.innerHTML='';
- const visible=objects.filter(o=>o.view===view);
+ const visible=objects.filter(o=>view==='room'||(o.view===view&&(view!=='wall'||(o.wallSide||'A')===val('activeWall'))));
  if(!visible.length){list.innerHTML='<p class="hint">Inga objekt i den här vyn ännu.</p>'}
  for(const o of visible){
   const div=document.createElement('div');div.className='objrow'+(o.id===selectedId?' selected':'');
@@ -362,10 +407,11 @@ function renderList(){
  }
 }
 function renderEditor(){
- const o=objects.find(a=>a.id===selectedId&&a.view===view);
+ const o=objects.find(a=>a.id===selectedId&&(view==='room'||a.view===view));
  $('editor').classList.toggle('hidden',!o);if(!o)return;
  $('objName').value=o.name;$('objX').value=o.x;$('objY').value=o.y;$('objW').value=o.w;$('objH').value=o.h;$('objHeight').value=o.hgt||2400;
  $('objHeightField').classList.toggle('hidden',o.type!=='trumma');
+ $('objWallSideField').classList.toggle('hidden',o.view!=='wall');$('objWallSide').value=o.wallSide||'A';
 }
 function updateObject(key,value){const o=objects.find(a=>a.id===selectedId);if(!o)return;o[key]=value;renderList();draw();scheduleAutoSave();}
 function applyZoomViewBox(){
@@ -378,12 +424,13 @@ function setZoom(next,center){
  if(center)zoomCenter=center;
  else if(zoomLevel===1)zoomCenter={x:360,y:235};
  else {
-  const o=objects.find(o=>o.id===selectedId&&o.view===view);
-  if(o){const W=positive('roomW'),H=positive('roomL'),sc=Math.min(620/W,365/H),dw=W*sc,dh=H*sc,ox=(720-dw)/2,oy=35+(380-dh)/2;zoomCenter={x:ox+o.x*sc,y:oy+o.y*sc};}
+  const o=objects.find(o=>o.id===selectedId&&(view==='room'||o.view===view));
+  if(o){const W=view==='wall'&&['B','D'].includes(val('activeWall'))?positive('roomL'):positive('roomW'),H=view==='wall'?positive('roomH'):positive('roomL'),sc=Math.min(620/W,365/H),dw=W*sc,dh=H*sc,ox=(720-dw)/2,oy=35+(380-dh)/2;zoomCenter={x:ox+o.x*sc,y:oy+(view==='wall'?H-o.y-o.h:o.y)*sc};}
  }
  draw();
 }
 function pushHistory(){
+ if(restoringState)return;
  const state=JSON.stringify(getState());
  if(!undoStack.length||undoStack[undoStack.length-1]!==state)undoStack.push(state);
  if(undoStack.length>50)undoStack.shift();
@@ -410,18 +457,18 @@ $('undoAction').onclick=undo;$('redoAction').onclick=redo;
 $('zoomIn').onclick=()=>setZoom(zoomLevel*1.5);
 $('zoomOut').onclick=()=>setZoom(zoomLevel/1.5);
 $('fitDrawing').onclick=()=>{zoomLevel=1;zoomCenter={x:360,y:235};draw();$('workspaceHint').textContent='Hela ritningen visas.'};
-drawing.addEventListener('wheel',e=>{e.preventDefault();const r=drawing.getBoundingClientRect(),vb=drawing.viewBox.baseVal;const point={x:vb.x+(e.clientX-r.left)*vb.width/r.width,y:vb.y+(e.clientY-r.top)*vb.height/r.height};setZoom(zoomLevel*(e.deltaY<0?1.15:1/1.15),point);},{passive:false});
+drawing.addEventListener('wheel',e=>{e.preventDefault();const point=svgPoint(e);setZoom(zoomLevel*(e.deltaY<0?1.15:1/1.15),point);},{passive:false});
 $('objName').addEventListener('focus',pushHistory);
 $('objX').addEventListener('focus',pushHistory);$('objY').addEventListener('focus',pushHistory);$('objW').addEventListener('focus',pushHistory);$('objH').addEventListener('focus',pushHistory);$('objHeight').addEventListener('focus',pushHistory);
 ['objName','objX','objY','objW','objH','objHeight'].forEach(id=>$(id).addEventListener('change',()=>{pushHistory();scheduleAutoSave()}));
-$('objName').addEventListener('input',e=>updateObject('name',e.target.value));
+$('objName').addEventListener('input',e=>updateObject('name',e.target.value));$('objWallSide').addEventListener('change',e=>updateObject('wallSide',e.target.value));
 [['objX','x'],['objY','y'],['objW','w'],['objH','h'],['objHeight','hgt']].forEach(([id,key])=>$(id).addEventListener('input',e=>updateObject(key,Math.max(0,Number(e.target.value)||0))));
-$('deleteSelected').onclick=()=>{objects=objects.filter(o=>o.id!==selectedId);selectedId=objects.find(o=>o.view===view)?.id||null;renderList();renderEditor();draw()};
+$('deleteSelected').onclick=()=>{pushHistory();objects=objects.filter(o=>o.id!==selectedId);selectedId=objects.find(o=>o.view===view)?.id||null;renderList();renderEditor();draw();pushHistory();scheduleAutoSave()};
 document.querySelectorAll('[data-add]').forEach(btn=>btn.addEventListener('click',()=>{
  if(btn.dataset.view)return;
  pushHistory();
- const type=btn.dataset.add, n=objects.filter(o=>o.type===type).length+1;
- const o={id:nextId++,view,type,name:`${names[type]} ${n}`,x:300,y:300,w:type==='brunn'?150:type==='trumma'?400:type==='fonster'?800:250,h:type==='brunn'?150:type==='trumma'?200:type==='fonster'?700:100,hgt:2400};
+ const type=btn.dataset.add, objectView=view==='room'?(['brunn','ror','pelare'].includes(type)?'floor':'wall'):view, n=objects.filter(o=>o.type===type).length+1;
+ const o={id:nextId++,view:objectView,wallSide:objectView==='wall'?val('activeWall'):'A',type,name:`${names[type]} ${n}`,x:300,y:300,w:type==='brunn'?150:type==='trumma'?400:type==='fonster'?800:250,h:type==='brunn'?150:type==='trumma'?200:type==='fonster'?700:100,hgt:positive('roomH')};
  objects.push(o);selectedId=o.id;renderList();renderEditor();draw();pushHistory();scheduleAutoSave();
 }));
 
@@ -432,19 +479,27 @@ $('drawing').addEventListener('click',e=>{
  const o=objects.find(item=>item.id===id);
  if(!o)return;
  selectedId=id;
- if(o.view!==view)setView(o.view);
+ if(view!=='room'&&o.view!==view)setView(o.view);
  renderList();renderEditor();draw();
  $('workspaceHint').textContent=`Valt: ${o.name} · ändra måtten i panelen Objekt och hinder.`;
 });
 
 // Touch- och musdragning direkt på ritningen.
 let dragState=null;
-const drawing=$('drawing');
 function svgPoint(evt){
- const r=drawing.getBoundingClientRect(),vb=drawing.viewBox.baseVal;
- return {x:vb.x+(evt.clientX-r.left)*vb.width/r.width,y:vb.y+(evt.clientY-r.top)*vb.height/r.height};
+ const pt=drawing.createSVGPoint();pt.x=evt.clientX;pt.y=evt.clientY;
+ const p=pt.matrixTransform(drawing.getScreenCTM().inverse());
+ return {x:p.x,y:p.y};
+}
+function clientDeltaToSvg(dx,dy){
+ const r=drawing.getBoundingClientRect(),aspect=720/470;
+ let renderedW,renderedH;
+ if(r.width/r.height>aspect){renderedH=r.height;renderedW=renderedH*aspect;}
+ else{renderedW=r.width;renderedH=renderedW/aspect;}
+ return {x:dx*(720/zoomLevel)/renderedW,y:dy*(470/zoomLevel)/renderedH};
 }
 drawing.addEventListener('pointerdown',e=>{
+ if(view==='room')return;
  touchPoints.set(e.pointerId,{x:e.clientX,y:e.clientY});
  if(touchPoints.size>=2){
   const pts=[...touchPoints.entries()].slice(-2),a=pts[0][1],b=pts[1][1];
@@ -476,24 +531,24 @@ drawing.addEventListener('pointermove',e=>{
   if(a&&b){
    const r=drawing.getBoundingClientRect(),dist=Math.max(1,Math.hypot(b.x-a.x,b.y-a.y)),midX=(a.x+b.x)/2,midY=(a.y+b.y)/2;
    zoomLevel=Math.max(1,Math.min(6,pinchState.startZoom*dist/pinchState.startDistance));
-   zoomCenter={x:pinchState.cx-(midX-pinchState.startMidX)*(720/zoomLevel)/r.width,y:pinchState.cy-(midY-pinchState.startMidY)*(470/zoomLevel)/r.height};
+   const delta=clientDeltaToSvg(midX-pinchState.startMidX,midY-pinchState.startMidY);zoomCenter={x:pinchState.cx-delta.x,y:pinchState.cy-delta.y};
    applyZoomViewBox();
   }
   return;
  }
  if(panState&&panState.pointerId===e.pointerId){
-  const r=drawing.getBoundingClientRect();zoomCenter={x:panState.cx-(e.clientX-panState.startClientX)*(720/zoomLevel)/r.width,y:panState.cy-(e.clientY-panState.startClientY)*(470/zoomLevel)/r.height};applyZoomViewBox();return;
+  const delta=clientDeltaToSvg(e.clientX-panState.startClientX,e.clientY-panState.startClientY);zoomCenter={x:panState.cx-delta.x,y:panState.cy-delta.y};applyZoomViewBox();return;
  }
  if(!dragState||dragState.pointerId!==e.pointerId)return;
  const p=svgPoint(e),o=objects.find(item=>item.id===dragState.id);
  if(!o)return;
- const dx=(p.x-dragState.startX)/dragState.scale,dy=(p.y-dragState.startY)/dragState.scale;
+ const dx=(p.x-dragState.startX)/dragState.scale,dy=(view==='wall'?-(p.y-dragState.startY):(p.y-dragState.startY))/dragState.scale;
  if(Math.abs(dx)+Math.abs(dy)>1)dragState.moved=true;
  if(!dragState.moved)return;
  const W=positive('roomW'),H=positive('roomL');
  o.x=Math.round(Math.max(0,Math.min(W,dragState.x+dx)));
  o.y=Math.round(Math.max(0,Math.min(H,dragState.y+dy)));
- const tx=(o.x-dragState.x)*dragState.scale,ty=(o.y-dragState.y)*dragState.scale;
+ const tx=(o.x-dragState.x)*dragState.scale,ty=(view==='wall'?-(o.y-dragState.y):(o.y-dragState.y))*dragState.scale;
  drawing.querySelectorAll(`[data-object-id="${o.id}"],[data-object-label="${o.id}"]`).forEach(el=>{
   el.setAttribute('transform',`translate(${tx} ${ty})`);
  });
@@ -507,32 +562,41 @@ function finishDrag(e){
 }
 drawing.addEventListener('pointerup',finishDrag);
 drawing.addEventListener('pointercancel',finishDrag);
-$('fitDrawing').onclick=()=>{draw();$('workspaceHint').textContent='Ritningen har anpassats till aktuella rums- och plattmått.'};
 $('focusObjects').onclick=()=>{$('objectsCard').scrollIntoView({behavior:'smooth',block:'start'});$('workspaceHint').textContent='Välj ett objekt i listan för att redigera det.'};
 document.querySelectorAll('[data-add][data-view]').forEach(btn=>btn.addEventListener('click',()=>{
  pushHistory();
  const target=btn.dataset.view;
- if(view!==target)setView(target);
+ if(view!=='room'&&view!==target)setView(target);
  const type=btn.dataset.add,n=objects.filter(o=>o.type===type).length+1;
- const o={id:nextId++,view:target,type,name:`${names[type]} ${n}`,x:300,y:300,w:type==='brunn'?150:type==='trumma'?400:type==='fonster'?800:250,h:type==='brunn'?150:type==='trumma'?200:type==='fonster'?700:100,hgt:2400};
+ const o={id:nextId++,view:target,wallSide:target==='wall'?val('activeWall'):'A',type,name:`${names[type]} ${n}`,x:300,y:300,w:type==='brunn'?150:type==='trumma'?400:type==='fonster'?800:250,h:type==='brunn'?150:type==='trumma'?200:type==='fonster'?700:100,hgt:positive('roomH')};
  objects.push(o);selectedId=o.id;renderList();renderEditor();draw();pushHistory();scheduleAutoSave();
  $('workspaceHint').textContent=`Tillagt: ${o.name}. Redigera placering och storlek i objektpanelen.`;
 }));
 
-function setView(v){view=v;$('floorTab').classList.toggle('active',v==='floor');$('wallTab').classList.toggle('active',v==='wall');$('floorAdd').classList.toggle('hidden',v!=='floor');$('wallAdd').classList.toggle('hidden',v!=='wall');renderList();renderEditor();draw();}
-$('floorTab').onclick=()=>setView('floor');$('wallTab').onclick=()=>setView('wall');
+function setView(v){view=v;$('floorTab').classList.toggle('active',v==='floor');$('wallTab').classList.toggle('active',v==='wall');$('roomTab').classList.toggle('active',v==='room');$('floorAdd').classList.toggle('hidden',v!=='floor'&&v!=='room');$('wallAdd').classList.toggle('hidden',v!=='wall'&&v!=='room');$('activeWallField').classList.toggle('hidden',v==='floor'||v==='room');renderList();renderEditor();draw();}
+$('floorTab').onclick=()=>setView('floor');$('wallTab').onclick=()=>setView('wall');$('roomTab').onclick=()=>setView('room');$('activeWall').addEventListener('change',()=>{draw();renderList();renderEditor()});
 $('roomShape').addEventListener('change',()=>{const l=val('roomShape')==='L';$('notchWField').classList.toggle('hidden',!l);$('notchHField').classList.toggle('hidden',!l);draw()});
 fields.forEach(id=>{
  $(id).addEventListener('focus',pushHistory);
  $(id).addEventListener('input',()=>{draw();scheduleAutoSave()});
 });
 $('layoutMode').addEventListener('change',()=>{ const manual=val('layoutMode')==='manual';$('offset').disabled=!manual;$('offsetY').disabled=!manual;draw();scheduleAutoSave()});
+$('drainAlign').onclick=()=>{
+ setView('floor');
+ const drain=objects.find(o=>o.view==='floor'&&o.type==='brunn');
+ if(!drain){$('workspaceHint').textContent='Lägg till en golvbrunn först, och välj sedan ”Centrera fog på golvbrunn”.';return;}
+ $('layoutMode').value='drain';$('offset').disabled=true;$('offsetY').disabled=true;draw();scheduleAutoSave();
+ $('workspaceHint').textContent='Foglinjerna går nu genom golvbrunnens centrum i både X- och Y-led.';
+};
 $('offset').disabled=true;$('offsetY').disabled=true;
 function getState(){return {version:1,fields:Object.fromEntries(fields.map(id=>[id,val(id)])),view,objects,nextId};}
 function applyState(s){
- if(s.fields)fields.forEach(id=>{if(s.fields[id]!==undefined)$(id).value=s.fields[id]});
- view=s.view||'floor';objects=Array.isArray(s.objects)?s.objects:[];nextId=s.nextId||Math.max(0,...objects.map(o=>o.id))+1;selectedId=objects.find(o=>o.view===view)?.id||null;
- $('roomShape').dispatchEvent(new Event('change'));$('layoutMode').dispatchEvent(new Event('change'));setView(view);
+ restoringState=true;
+ try{
+  if(s.fields)fields.forEach(id=>{if(s.fields[id]!==undefined)$(id).value=s.fields[id]});
+  view=s.view||'floor';objects=Array.isArray(s.objects)?s.objects:[];nextId=s.nextId||Math.max(0,...objects.map(o=>o.id))+1;selectedId=objects.find(o=>o.view===view)?.id||null;
+  $('roomShape').dispatchEvent(new Event('change'));$('layoutMode').dispatchEvent(new Event('change'));setView(view);
+ }finally{restoringState=false;}
 }
 $('saveProject').onclick=()=>{try{localStorage.setItem('plattsattarenProject',JSON.stringify(getState()));$('saveStatus').textContent='Projektet sparades på den här enheten.'}catch(e){$('saveStatus').textContent='Kunde inte spara lokalt. Exportera projektfilen i stället.'}};
 $('exportProject').onclick=()=>{const blob=new Blob([JSON.stringify(getState(),null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(val('projectName')||'plattsattning').replace(/[^a-z0-9åäö_-]/gi,'_')+'.json';a.click();URL.revokeObjectURL(a.href)};
@@ -540,12 +604,13 @@ $('importProject').onclick=()=>$('importFile').click();
 $('importFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{applyState(JSON.parse(await f.text()));$('saveStatus').textContent='Projektfil importerad.'}catch(err){$('saveStatus').textContent='Filen kunde inte läsas. Kontrollera att det är en projektfil från appen.'}e.target.value=''};
 $('printProject').onclick=()=>{
  $('printSummary').classList.remove('hidden');
- $('printSummary').innerHTML=`<h2>Arbetsunderlag – ${escapeXml(val('projectName')||'Plattsättning')}</h2><p><strong>Rum:</strong> ${positive('roomW')} × ${positive('roomL')} mm · <strong>Vy:</strong> ${view==='floor'?'Golv':'Vägg'}</p><p><strong>Platta:</strong> ${positive('tileW')} × ${positive('tileH')} mm · <strong>Fog:</strong> ${num('joint')} mm · <strong>Mönster:</strong> ${escapeXml($('pattern').selectedOptions[0].textContent)}</p><p><strong>Nettoyta:</strong> ${$('areaMetric').textContent} · <strong>Plattor inkl. spill:</strong> ${$('tilesMetric').textContent} · <strong>Kartonger:</strong> ${$('boxesMetric').textContent}</p><p><strong>Fix:</strong> ${$('fixMetric').textContent} · <strong>Fixsäckar:</strong> ${$('bagsMetric').textContent} · <strong>Fogmassa:</strong> ${$('groutMetric').textContent}</p><p><strong>Objekt:</strong> ${objects.filter(o=>o.view===view).map(o=>`${escapeXml(o.name)} (X ${o.x}, Y ${o.y}, ${o.w} × ${o.h} mm)`).join('; ')||'Inga'}</p><p><em>Beräkningsunderlag – kontrollera alltid mått, underlag och produktåtgång på plats.</em></p>`;
+ $('printSummary').innerHTML=`<h2>Arbetsunderlag – ${escapeXml(val('projectName')||'Plattsättning')}</h2><p><strong>Rum:</strong> ${positive('roomW')} × ${positive('roomL')} mm · <strong>Takhöjd:</strong> ${positive('roomH')} mm · <strong>Vy:</strong> ${view==='floor'?'Golv':view==='wall'?'Vägg '+val('activeWall'):'Helrum'}</p><p><strong>Platta:</strong> ${positive('tileW')} × ${positive('tileH')} mm · <strong>Fog:</strong> ${num('joint')} mm · <strong>Mönster:</strong> ${escapeXml($('pattern').selectedOptions[0].textContent)}</p><p><strong>Nettoyta:</strong> ${$('areaMetric').textContent} · <strong>Plattor inkl. spill:</strong> ${$('tilesMetric').textContent} · <strong>Kartonger:</strong> ${$('boxesMetric').textContent}</p><p><strong>Fix:</strong> ${$('fixMetric').textContent} · <strong>Fixsäckar:</strong> ${$('bagsMetric').textContent} · <strong>Fogmassa:</strong> ${$('groutMetric').textContent}</p><p><strong>Objekt:</strong> ${objects.filter(o=>view==='room'||o.view===view).map(o=>`${escapeXml(o.name)}${o.view==='wall'?' · Vägg '+(o.wallSide||'A'):''} (X ${o.x}, Y ${o.y}, ${o.w} × ${o.h} mm)`).join('; ')||'Inga'}</p><p><em>Beräkningsunderlag – kontrollera alltid mått, underlag och produktåtgång på plats.</em></p>`;
  window.print();
  setTimeout(()=>$('printSummary').classList.add('hidden'),1000);
 };
 $('downloadSvg').onclick=()=>{const clone=$('drawing').cloneNode(true);clone.setAttribute('xmlns','http://www.w3.org/2000/svg');const blob=new Blob([new XMLSerializer().serializeToString(clone)],{type:'image/svg+xml'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='plattsattningsritning.svg';a.click();URL.revokeObjectURL(a.href)};
-try{const saved=localStorage.getItem('plattsattarenProject');if(saved)applyState(JSON.parse(saved));else {renderList();renderEditor();draw()}}catch(e){renderList();renderEditor();draw()}
+try{const saved=localStorage.getItem('plattsattarenProject');if(saved)applyState(JSON.parse(saved));else {setView(view)}}catch(e){setView(view)}
+objects.forEach(o=>{if(o.view==='wall'&&!o.wallSide)o.wallSide='A'});
 undoStack=[JSON.stringify(getState())];redoStack=[];updateHistoryButtons();
 fields.forEach(id=>$(id).addEventListener('change',()=>{pushHistory();scheduleAutoSave()}));
 })();
