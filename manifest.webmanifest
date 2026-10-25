@@ -1,0 +1,19 @@
+{
+  "name": "Plattsättaren",
+  "short_name": "Plattsättaren",
+  "description": "Rit- och kalkylverktyg för plattsättning.",
+  "lang": "sv-SE",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#eef1ed",
+  "theme_color": "#18352f",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
