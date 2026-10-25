@@ -264,7 +264,7 @@ function draw(){
   if(o.type==='brunn'||o.type==='ror')markup+=`<circle data-object-id="${o.id}" cx="${x}" cy="${y}" r="${Math.max(4,(o.w||100)*s/2)}" fill="${colors[o.type]}" stroke="${stroke}" stroke-width="${swid}" style="cursor:pointer"/><circle data-object-id="${o.id}" cx="${x}" cy="${y}" r="${Math.max(1,(o.w||100)*s/5)}" fill="#fff" style="cursor:pointer"/>`;
   else if(o.type==='horn')markup+=`<line data-object-id="${o.id}" x1="${x}" y1="${oy}" x2="${x}" y2="${oy+dh}" stroke="${colors.horn}" stroke-width="4" stroke-dasharray="8 5" style="cursor:pointer"/>`;
   else markup+=`<rect data-object-id="${o.id}" x="${x}" y="${y}" width="${w}" height="${h}" fill="${colors[o.type]}" fill-opacity=".85" stroke="${stroke}" stroke-width="${swid}" style="cursor:pointer"/>`;
-  markup+=`<text x="${Math.min(710,Math.max(8,x+5))}" y="${Math.min(455,Math.max(14,y-5))}" font-size="12" fill="#263b34">${escapeXml(o.name)}</text>`;
+  markup+=`<text data-object-label="${o.id}" x="${Math.min(710,Math.max(8,x+5))}" y="${Math.min(455,Math.max(14,y-5))}" font-size="12" fill="#263b34">${escapeXml(o.name)}</text>`;
  }
  markup+=`</g><path d="${floorOutline(ox,oy,dw,dh,nw*s,nh*s,shape)}" fill="none" stroke="#263b34" stroke-width="3"/>
  <text x="${ox+dw/2}" y="${oy-12}" text-anchor="middle" font-size="13" fill="#263b34">${W} mm</text>
@@ -310,6 +310,7 @@ $('objName').addEventListener('input',e=>updateObject('name',e.target.value));
 [['objX','x'],['objY','y'],['objW','w'],['objH','h'],['objHeight','hgt']].forEach(([id,key])=>$(id).addEventListener('input',e=>updateObject(key,Math.max(0,Number(e.target.value)||0))));
 $('deleteSelected').onclick=()=>{objects=objects.filter(o=>o.id!==selectedId);selectedId=objects.find(o=>o.view===view)?.id||null;renderList();renderEditor();draw()};
 document.querySelectorAll('[data-add]').forEach(btn=>btn.addEventListener('click',()=>{
+ if(btn.dataset.view)return;
  const type=btn.dataset.add, n=objects.filter(o=>o.type===type).length+1;
  const o={id:nextId++,view,type,name:`${names[type]} ${n}`,x:300,y:300,w:type==='brunn'?150:type==='trumma'?400:type==='fonster'?800:250,h:type==='brunn'?150:type==='trumma'?200:type==='fonster'?700:100,hgt:2400};
  objects.push(o);selectedId=o.id;renderList();renderEditor();draw();
@@ -355,11 +356,15 @@ drawing.addEventListener('pointermove',e=>{
  if(Math.abs(dx)+Math.abs(dy)>1)dragState.moved=true;
  if(!dragState.moved)return;
  const W=positive('roomW'),H=positive('roomL');
- o.x=Math.round(Math.max(0,Math.min(W-dragState.startX*0+W,dragState.x+dx)));
+ o.x=Math.round(Math.max(0,Math.min(W,dragState.x+dx)));
  o.y=Math.round(Math.max(0,Math.min(H,dragState.y+dy)));
- renderEditor();draw();
+ const tx=(o.x-dragState.x)*dragState.scale,ty=(o.y-dragState.y)*dragState.scale;
+ drawing.querySelectorAll(`[data-object-id="${o.id}"],[data-object-label="${o.id}"]`).forEach(el=>{
+  el.setAttribute('transform',`translate(${tx} ${ty})`);
+ });
+ $('objX').value=o.x;$('objY').value=o.y;
 });
-function finishDrag(e){if(dragState&&(!e||dragState.pointerId===e.pointerId)){dragState=null;renderList();renderEditor();}}
+function finishDrag(e){if(dragState&&(!e||dragState.pointerId===e.pointerId)){dragState=null;renderList();renderEditor();draw();}}
 drawing.addEventListener('pointerup',finishDrag);
 drawing.addEventListener('pointercancel',finishDrag);
 $('fitDrawing').onclick=()=>{draw();$('workspaceHint').textContent='Ritningen har anpassats till aktuella rums- och plattmått.'};
