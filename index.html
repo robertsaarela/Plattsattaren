@@ -123,7 +123,8 @@ main{grid-template-columns:1fr}
   <h3>Läggningsläge</h3>
   <div class="fieldgrid">
     <div><label for="layoutMode">Startläge</label><select id="layoutMode"><option value="auto">Automatiskt – färre småbitar</option><option value="center">Centrerat</option><option value="manual">Manuell förskjutning</option></select></div>
-    <div><label for="offset">Förskjutning (mm)</label><input id="offset" type="number" value="0"></div>
+    <div><label for="offset">Förskjutning X (mm)</label><input id="offset" type="number" value="0"></div>
+    <div><label for="offsetY">Förskjutning Y (mm)</label><input id="offsetY" type="number" value="0"></div>
   </div>
   <p class="hint">Förskjutningen påverkar foglinjernas läge. Automatläget testar olika startlägen och försöker minska smala kantbitar.</p>
 </section>
@@ -206,7 +207,7 @@ main{grid-template-columns:1fr}
 <script>
 (() => {
 const $=id=>document.getElementById(id);
-const fields=['projectName','roomShape','roomW','roomL','notchW','notchH','tileW','tileH','joint','minCut','layoutMode','offset','waste','tilesBox','fixRate','bagSize'];
+const fields=['projectName','roomShape','roomW','roomL','notchW','notchH','tileW','tileH','joint','minCut','layoutMode','offset','offsetY','waste','tilesBox','fixRate','bagSize'];
 let view='floor', selectedId=null, nextId=1, objects=[];
 const names={brunn:'Golvbrunn',ror:'Rör / genomföring',pelare:'Pelare / hinder',fonster:'Fönster',dorr:'Dörr',trumma:'Trumma',horn:'Ytterhörn'};
 const colors={brunn:'#4b6475',ror:'#168aad',pelare:'#64748b',fonster:'#7dd3fc',dorr:'#a7f3d0',trumma:'#f59e0b',horn:'#dc2626'};
@@ -236,12 +237,11 @@ function bestOffset(R,T,J,minCut){
  }
  return best;
 }
-function currentOffset(R,T,J){
- const mode=val('layoutMode');
- if(mode==='manual')return ((Number(val('offset'))%(T+J))+(T+J))%(T+J);
- const best=bestOffset(R,T,J,num('minCut'));
+function currentOffset(R,T,J,axis='x'){
+ const mode=val('layoutMode'), field=axis==='y'?'offsetY':'offset';
+ if(mode==='manual')return ((Number(val(field))%(T+J))+(T+J))%(T+J);
  if(mode==='center')return (T+J)/2;
- return best.s;
+ return bestOffset(R,T,J,num('minCut')).s;
 }
 function floorOutline(x,y,w,h,notchW,notchH,shape){
  if(shape==='L'&&notchW>0&&notchH>0)return `M ${x} ${y} L ${x+w-notchW} ${y} L ${x+w-notchW} ${y+notchH} L ${x+w} ${y+notchH} L ${x+w} ${y+h} L ${x} ${y+h} Z`;
@@ -251,12 +251,12 @@ function draw(){
  const svg=$('drawing'), W=positive('roomW'), H=positive('roomL'), TW=positive('tileW'), TH=positive('tileH'), J=num('joint');
  const shape=val('roomShape'), nw=Math.min(W,num('notchW')), nh=Math.min(H,num('notchH'));
  const sw=620/W, sh=365/H, s=Math.min(sw,sh), dw=W*s,dh=H*s, ox=(720-dw)/2, oy=35+(380-dh)/2;
- const R=W, T=TW, offset=currentOffset(R,TW,J);
+ const R=W, T=TW, offset=currentOffset(R,TW,J,'x'), offsetY=currentOffset(H,TH,J,'y');
  let markup=`<defs><clipPath id="roomclip"><path d="${floorOutline(ox,oy,dw,dh,nw*s,nh*s,shape)}"/></clipPath></defs>
  <rect x="0" y="0" width="720" height="470" rx="10" fill="#f8faf8"/>
  <path d="${floorOutline(ox,oy,dw,dh,nw*s,nh*s,shape)}" fill="#e8e8e1" stroke="#263b34" stroke-width="3"/>
  <g clip-path="url(#roomclip)">`;
- const pitchX=TW+J, pitchY=TH+J, offX=offset, offY=(TH+J)/2;
+ const pitchX=TW+J, pitchY=TH+J, offX=offset, offY=offsetY;
  for(let x=ox-((offX*s)%(pitchX*s));x<ox+dw+1;x+=pitchX*s) markup+=`<line x1="${x}" y1="${oy}" x2="${x}" y2="${oy+dh}" stroke="#87958d" stroke-width="1"/>`;
  for(let y=oy-((offY*s)%(pitchY*s));y<oy+dh+1;y+=pitchY*s) markup+=`<line x1="${ox}" y1="${y}" x2="${ox+dw}" y2="${y}" stroke="#87958d" stroke-width="1"/>`;
  for(const o of objects.filter(o=>o.view===view)){
@@ -271,7 +271,7 @@ function draw(){
  <text x="${ox+dw+10}" y="${oy+dh/2}" font-size="13" fill="#263b34" transform="rotate(90 ${ox+dw+10} ${oy+dh/2})">${H} mm</text>`;
  svg.innerHTML=markup;
  const cuts=cutsFor(W,TW,J,offset), min=num('minCut'), small=cuts.filter(c=>c<min);
- $('drawingStatus').textContent=`${view==='floor'?'Golv':'Vägg'} · platta ${TW} × ${TH} mm · fog ${J} mm · beräknad förskjutning ${Math.round(offset)} mm. Kantkapningar längs bredden: ${cuts.join(', ')} mm.`;
+ $('drawingStatus').textContent=`${view==='floor'?'Golv':'Vägg'} · platta ${TW} × ${TH} mm · fog ${J} mm · förskjutning X ${Math.round(offset)} mm, Y ${Math.round(offsetY)} mm. Kantkapningar längs bredden: ${cuts.join(', ')} mm.`;
  updateMaterials(small,cuts);
 }
 function escapeXml(s){return String(s).replace(/[<>&'"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;',"'":'&apos;','"':'&quot;'}[c]));}
@@ -382,8 +382,8 @@ function setView(v){view=v;$('floorTab').classList.toggle('active',v==='floor');
 $('floorTab').onclick=()=>setView('floor');$('wallTab').onclick=()=>setView('wall');
 $('roomShape').addEventListener('change',()=>{const l=val('roomShape')==='L';$('notchWField').classList.toggle('hidden',!l);$('notchHField').classList.toggle('hidden',!l);draw()});
 fields.forEach(id=>$(id).addEventListener('input',draw));
-$('layoutMode').addEventListener('change',()=>{ $('offset').disabled=val('layoutMode')!=='manual';draw()});
-$('offset').disabled=true;
+$('layoutMode').addEventListener('change',()=>{ const manual=val('layoutMode')==='manual';$('offset').disabled=!manual;$('offsetY').disabled=!manual;draw()});
+$('offset').disabled=true;$('offsetY').disabled=true;
 function getState(){return {version:1,fields:Object.fromEntries(fields.map(id=>[id,val(id)])),view,objects,nextId};}
 function applyState(s){
  if(s.fields)fields.forEach(id=>{if(s.fields[id]!==undefined)$(id).value=s.fields[id]});
