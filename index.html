@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#18352f">
+<title>Plattsättaren</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{
+ --ink:#172b27;--ink-2:#28443d;--muted:#73817a;--bg:#eef1ed;--card:#ffffff;
+ --line:#dce4dd;--accent:#c66b45;--accent-dark:#a94f30;--accent-soft:#faeee7;
+ --green:#2e6652;--green-soft:#eaf3ed;--warning:#9b4c24;--warning-bg:#fff0df;
+ --shadow:0 8px 24px rgba(24,47,39,.055);--radius:18px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.005em}
+header{position:relative;overflow:hidden;background:linear-gradient(125deg,#142923 0%,#23483d 72%,#31594b 100%);color:#fff;padding:25px 18px 27px;border-bottom:4px solid var(--accent)}
+header:after{content:"";position:absolute;width:230px;height:230px;border:1px solid #ffffff18;border-radius:50%;right:-80px;top:-105px;box-shadow:0 0 0 28px #ffffff08,0 0 0 58px #ffffff05}
+header h1{font-size:25px;line-height:1.15;margin:0 0 7px;font-weight:750;letter-spacing:-.035em;position:relative;z-index:1}
+header p{margin:0;color:#d0dfd6;font-size:13px;position:relative;z-index:1}
+main{max-width:1080px;margin:auto;padding:16px;display:grid;gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:17px;box-shadow:var(--shadow)}
+h2{font-size:17px;line-height:1.25;margin:0 0 14px;color:var(--ink);font-weight:750;letter-spacing:-.015em;display:flex;align-items:center;gap:9px}
+h2:before{content:"";display:block;width:4px;height:19px;border-radius:8px;background:var(--accent)}
+h3{font-size:13px;text-transform:uppercase;letter-spacing:.075em;margin:17px 0 9px;color:var(--muted);font-weight:750}
+.row,.actions,.tabs{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tabs{background:#f0f3ef;padding:4px;border-radius:12px}
+.tabs button{flex:1;border:0;background:transparent}
+button,select,input{font:inherit}
+button{border:1px solid var(--line);background:#fff;border-radius:11px;padding:10px 13px;color:var(--ink);cursor:pointer;transition:background .15s,border-color .15s,transform .15s;box-shadow:0 1px 2px #172b2708}
+button:hover{border-color:#aab9af;background:#f8faf8}
+button:active{transform:translateY(1px)}
+button.primary{background:var(--green);border-color:var(--green);color:#fff}
+button.primary:hover{background:#245441}
+button.active{background:var(--ink);color:white;border-color:var(--ink);box-shadow:0 3px 8px #172b2720}
+button.danger{color:#a83229;background:#fff8f7}
+label{display:block;font-size:12px;color:var(--muted);font-weight:650;margin-bottom:5px}
+input,select{width:100%;min-width:0;border:1px solid #d3ddd5;border-radius:10px;padding:11px 12px;background:#fbfcfa;color:var(--ink);outline:none;transition:border .15s,box-shadow .15s}
+input:focus,select:focus{border-color:var(--green);box-shadow:0 0 0 3px #2e66521b;background:white}
+.fieldgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.fieldgrid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+small,.hint{color:var(--muted);font-size:12px}
+.hint{line-height:1.55;margin:10px 0 0}
+.metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.metric{background:linear-gradient(145deg,#f7f9f6,#eef4ef);border:1px solid #e4ebe4;border-radius:14px;padding:13px}
+.metric span{display:block;font-size:11px;color:var(--muted);font-weight:650;letter-spacing:.025em}
+.metric strong{display:block;font-size:23px;line-height:1.2;color:var(--ink);margin-top:5px;letter-spacing:-.035em}
+#drawing{width:100%;display:block;background:#f8faf7;border:1px solid var(--line);border-radius:14px;touch-action:none}
+.objectlist{display:grid;gap:8px}
+.objrow{display:flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:12px;padding:9px;background:#fff;transition:border-color .15s,background .15s}
+.objrow.selected{border-color:var(--green);background:#eff6f0;box-shadow:inset 3px 0 var(--green)}
+.objrow .objname{flex:1;min-width:0;padding:3px;cursor:pointer}
+.objrow .objname strong{display:block;font-size:13px}
+.objrow .objname small{display:block;overflow-wrap:anywhere;font-size:11px}
+.objrow button{padding:8px 10px}
+.notice{border-radius:12px;background:var(--warning-bg);color:var(--warning);padding:12px 13px;font-size:13px;border:1px solid #f4ddc4}
+.good{background:var(--green-soft);color:var(--green);border-color:#d4e7d8}
+.hidden{display:none!important}
+footer{padding:12px 16px 28px;text-align:center;color:var(--muted);font-size:11px}
+#saveStatus{padding:10px 12px;background:#f5f7f4;border-radius:10px}
+
+/* Workspace-first design */
+main{grid-template-columns:1fr}
+#drawingCard{order:0;padding:16px;background:linear-gradient(180deg,#fff 0%,#fbfcfa 100%)}
+#drawingCard h2:before{background:var(--green)}
+#drawing{min-height:280px;background-color:#f7f9f6;background-image:linear-gradient(#e8eee8 1px,transparent 1px),linear-gradient(90deg,#e8eee8 1px,transparent 1px);background-size:22px 22px;border:1px solid #d8e2d9;box-shadow:inset 0 0 0 5px #ffffff8a}
+.workspace-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.toolbar-group{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.toolbar-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800;margin-right:2px}
+.workspace-toolbar button{font-size:12px;padding:8px 10px;border-radius:9px;background:#f7f9f6}
+.workspace-toolbar button[data-add]{border-color:#d7e4d9;color:var(--green);background:#f0f6f1;font-weight:700}
+.workspace-footer{display:flex;align-items:center;gap:8px;margin-top:10px;color:var(--muted);font-size:12px}
+.live-dot{display:inline-block;width:7px;height:7px;background:#4e8b66;border-radius:50%;box-shadow:0 0 0 3px #4e8b661b}
+#projectCard,#tileCard,#objectsCard,#materialsCard,#exportCard{order:1}
+#projectCard{background:linear-gradient(145deg,#fff,#fcfdfb)}
+#objectsCard{order:2}
+#materialsCard{order:3}
+#exportCard{order:4}
+#objectsCard .fieldgrid button{min-height:43px;font-weight:650}
+#objectList{max-height:320px;overflow:auto;padding:2px}
+.objrow{cursor:pointer}
+.objrow:hover{border-color:#9bb4a2}
+#editor{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+#drawingStatus{background:#f4f7f3;border-radius:9px;padding:8px 10px}
+
+@media(min-width:760px){main{grid-template-columns:1fr 1fr;align-items:start;padding:22px}.wide{grid-column:1/-1}.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}header{padding-left:max(22px,calc((100vw - 1036px)/2));padding-right:22px}}
+@media(max-width:390px){main{padding:10px;gap:10px}.card{padding:13px;border-radius:15px}.fieldgrid.three{grid-template-columns:repeat(2,minmax(0,1fr))}.metric strong{font-size:20px}header{padding:21px 15px 23px}}
+@media print{header{background:white;color:#000;padding:0;border:0}header p{color:#333}body{background:white}.card{box-shadow:none;break-inside:avoid}button,.no-print{display:none!important}main{display:block;padding:0}.card{margin:10px 0}#printSummary{display:block!important;border:0;padding:0 0 12px;box-shadow:none}#drawing{background:white!important;box-shadow:none;max-height:70vh}.workspace-toolbar{display:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Plattsättaren <span style="color:#e8a183;font-weight:500">/ PRO</span></h1>
+  <p>Ritning, kapplanering och materialkalkyl · mått i mm</p>
+</header>
+<main>
+<section class="card" id="projectCard">
+  <h2>Projekt och rum</h2>
+  <div class="fieldgrid">
+    <div><label for="projectName">Projektnamn</label><input id="projectName" value="Badrum 1"></div>
+    <div><label for="roomShape">Rumsform</label><select id="roomShape"><option value="rect">Rektangulärt</option><option value="L">L-format golv</option></select></div>
+    <div><label for="roomW">Bredd (mm)</label><input id="roomW" type="number" min="1" value="3000"></div>
+    <div id="lengthField"><label for="roomL">Längd (mm)</label><input id="roomL" type="number" min="1" value="4000"></div>
+    <div id="notchWField" class="hidden"><label for="notchW">Urtagets bredd (mm)</label><input id="notchW" type="number" min="0" value="1000"></div>
+    <div id="notchHField" class="hidden"><label for="notchH">Urtagets höjd (mm)</label><input id="notchH" type="number" min="0" value="1500"></div>
+  </div>
+  <h3>Arbetsvy</h3>
+  <div class="tabs">
+    <button id="floorTab" class="active" type="button">Golvvy</button>
+    <button id="wallTab" type="button">Väggvy</button>
+  </div>
+  <p class="hint">Golvobjekt placeras med X/Y från övre vänstra hörnet. Väggobjekt använder X från vänster och Y från golv i måttfälten.</p>
+</section>
+<section class="card" id="tileCard">
+  <h2>Platta och fog</h2>
+  <div class="fieldgrid">
+    <div><label for="tileW">Plattbredd (mm)</label><input id="tileW" type="number" min="1" value="600"></div>
+    <div><label for="tileH">Platthöjd (mm)</label><input id="tileH" type="number" min="1" value="600"></div>
+    <div><label for="joint">Fogbredd (mm)</label><input id="joint" type="number" min="0" value="1"></div>
+    <div><label for="minCut">Minsta kapbredd (mm)</label><input id="minCut" type="number" min="0" value="100"></div>
+  </div>
+  <h3>Läggningsläge</h3>
+  <div class="fieldgrid">
+    <div><label for="layoutMode">Startläge</label><select id="layoutMode"><option value="auto">Automatiskt – färre småbitar</option><option value="center">Centrerat</option><option value="drain">Centrera platta på golvbrunn</option><option value="manual">Manuell förskjutning</option></select></div>
+    <div><label for="offset">Förskjutning X (mm)</label><input id="offset" type="number" value="0"></div>
+    <div><label for="offsetY">Förskjutning Y (mm)</label><input id="offsetY" type="number" value="0"></div>
+    <div><label for="pattern">Läggningsmönster</label><select id="pattern"><option value="grid">Rakt förband</option><option value="half">Halvförband</option><option value="third">Tredjedelsförband</option><option value="diagonal">Diagonal 45°</option></select></div>
+  </div>
+  <p class="hint">Förskjutningen påverkar foglinjernas läge. Automatläget testar olika startlägen och försöker minska smala kantbitar.</p>
+</section>
+<section class="card wide" id="drawingCard">
+  <div class="row" style="justify-content:space-between">
+    <h2 style="margin:0">Arbetsyta</h2>
+    <button id="downloadSvg" type="button">Spara ritning (SVG)</button>
+  </div>
+  <div class="workspace-toolbar no-print">
+    <div class="toolbar-group">
+      <span class="toolbar-label">Lägg till</span>
+      <button type="button" data-add="brunn" data-view="floor">＋ Brunn</button>
+      <button type="button" data-add="fonster" data-view="wall">＋ Fönster</button>
+      <button type="button" data-add="trumma" data-view="wall">＋ Trumma</button>
+    </div>
+    <div class="toolbar-group">
+      <button id="undoAction" type="button" title="Ångra senaste ändring">↶ Ångra</button>
+      <button id="redoAction" type="button" title="Gör om senaste ändring">↷ Gör om</button>
+      <button id="zoomOut" type="button" aria-label="Zooma ut">−</button>
+      <button id="zoomIn" type="button" aria-label="Zooma in">＋ Zoom</button>
+      <button id="fitDrawing" type="button">Visa allt</button>
+      <button id="focusObjects" type="button">Objektlista</button>
+    </div>
+  </div>
+  <svg id="drawing" viewBox="0 0 720 470" role="application" aria-label="Interaktiv ritning av golv eller vägg"></svg>
+  <div class="workspace-footer"><span class="live-dot"></span><span id="workspaceHint">Välj ett objekt i listan för att redigera mått. Nyp för att zooma på mobilen, använd knapparna eller mushjulet; dra tom yta för att panorera.</span></div>
+  <div id="drawingStatus" class="hint" style="margin-top:8px"></div>
+</section>
+<section class="card" id="objectsCard">
+  <h2>Objekt och hinder</h2>
+  <div id="floorAdd" class="fieldgrid">
+    <button data-add="brunn">＋ Golvbrunn</button><button data-add="ror">＋ Rör / genomföring</button><button data-add="pelare">＋ Pelare / hinder</button>
+  </div>
+  <div id="wallAdd" class="fieldgrid hidden">
+    <button data-add="fonster">＋ Fönster</button><button data-add="dorr">＋ Dörr</button><button data-add="trumma">＋ Trumma</button><button data-add="horn">＋ Ytterhörn</button>
+  </div>
+  <h3>Objekt i aktuell vy</h3>
+  <div id="objectList" class="objectlist"></div>
+  <div id="editor" class="hidden">
+    <h3>Redigera valt objekt</h3>
+    <div class="fieldgrid">
+      <div style="grid-column:1/-1"><label for="objName">Namn</label><input id="objName"></div>
+      <div><label for="objX">X från vänster (mm)</label><input id="objX" type="number"></div>
+      <div><label for="objY">Y (mm)</label><input id="objY" type="number"></div>
+      <div><label for="objW">Bredd / diameter (mm)</label><input id="objW" type="number" min="1"></div>
+      <div><label for="objH">Höjd / djup (mm)</label><input id="objH" type="number" min="1"></div>
+      <div id="objHeightField" class="hidden"><label for="objHeight">Trummans höjd (mm)</label><input id="objHeight" type="number" min="1" value="2400"></div>
+    </div>
+    <div class="actions" style="margin-top:10px"><button id="deleteSelected" class="danger" type="button">Ta bort valt objekt</button></div>
+  </div>
+</section>
+<section class="card" id="materialsCard">
+  <h2>Materialöversikt</h2>
+  <div class="fieldgrid">
+    <div><label for="waste">Spill (%)</label><input id="waste" type="number" min="0" value="10"></div>
+    <div><label for="tilesBox">Plattor per kartong</label><input id="tilesBox" type="number" min="1" value="4"></div>
+    <div><label for="fixRate">Fixåtgång (kg/m²)</label><input id="fixRate" type="number" min="0" value="4"></div>
+    <div><label for="bagSize">Säckstorlek fix (kg)</label><input id="bagSize" type="number" min="1" value="20"></div>
+    <div><label for="groutDepth">Beräknat fogdjup (mm)</label><input id="groutDepth" type="number" min="1" value="8"></div>
+  </div>
+  <div class="metrics" style="margin-top:12px">
+    <div class="metric"><span>Nettoyta efter öppningar</span><strong id="areaMetric">12,00 m²</strong></div>
+    <div class="metric"><span>Plattor inkl. spill</span><strong id="tilesMetric">37</strong></div>
+    <div class="metric"><span>Hela kartonger</span><strong id="boxesMetric">10</strong></div>
+    <div class="metric"><span>Fix, uppskattat</span><strong id="fixMetric">48 kg</strong></div>
+    <div class="metric"><span>Fixsäckar</span><strong id="bagsMetric">3</strong></div>
+    <div class="metric"><span>Fogmassa, grov uppskattning</span><strong id="groutMetric">0,00 kg</strong></div>
+  </div>
+  <p class="hint">Materialytan är bruttoyta för den aktuella rektangulära vyn. Öppningar, trummor och urtag dras inte automatiskt av i denna första version. Fogmassa är en uppskattning, kontrollera produktens åtgång.</p>
+  <div id="cutWarning" class="notice" style="margin-top:10px"></div>
+</section>
+<section id="printSummary" class="card hidden"></section>
+<section class="card" id="exportCard">
+  <h2>Projekt och export</h2>
+  <div class="actions">
+    <button id="saveProject" class="primary" type="button">Spara projekt på enheten</button>
+    <button id="exportProject" type="button">Exportera projektfil</button>
+    <button id="importProject" type="button">Importera projektfil</button>
+    <button id="printProject" type="button">Skriv ut / PDF</button>
+    <input id="importFile" class="hidden" type="file" accept=".json,application/json">
+  </div>
+  <p id="saveStatus" class="hint">Projekt sparas lokalt i webbläsaren på den här enheten. Exportera en projektfil som säkerhetskopia eller för att flytta mellan enheter.</p>
+</section>
+</main>
+<footer>Plattsättaren · Planeringshjälp, inte ersättning för kontrollmätning på plats.</footer>
+<script>
+(() => {
+const $=id=>document.getElementById(id);
+const fields=['projectName','roomShape','roomW','roomL','notchW','notchH','tileW','tileH','joint','minCut','layoutMode','offset','offsetY','pattern','waste','tilesBox','fixRate','bagSize','groutDepth'];
+let view='floor', selectedId=null, nextId=1, objects=[];
+let zoomLevel=1, zoomCenter={x:360,y:235}, panState=null, pinchState=null, touchPoints=new Map();
+let undoStack=[], redoStack=[], autoSaveTimer=null, editBeforeState=null;
+const names={brunn:'Golvbrunn',ror:'Rör / genomföring',pelare:'Pelare / hinder',fonster:'Fönster',dorr:'Dörr',trumma:'Trumma',horn:'Ytterhörn'};
+const colors={brunn:'#4b6475',ror:'#168aad',pelare:'#64748b',fonster:'#7dd3fc',dorr:'#a7f3d0',trumma:'#f59e0b',horn:'#dc2626'};
+const num=id=>Math.max(0,Number($(id).value)||0);
+const positive=id=>Math.max(1,Number($(id).value)||1);
+const val=id=>$(id).value;
+function defaults(){return [
+{id:nextId++,view:'floor',type:'brunn',name:'Golvbrunn 1',x:1500,y:2000,w:150,h:150},
+{id:nextId++,view:'wall',type:'trumma',name:'Trumma 1',x:300,y:0,w:400,h:200,hgt:2400}
+]}
+objects=defaults(); selectedId=objects[0].id;
+function getRoom(){return {w:positive('roomW'),h:view==='floor'?positive('roomL'):positive('roomL'),wallH:positive('roomL')};}
+function roomHeight(){return view==='floor'?positive('roomL'):positive('roomL');}
+function pitch(id){return positive(id)+num('joint');}
+function cutsFor(R,T,J,offset){
+ const p=T+J, start=((offset%p)+p)%p, cuts=[];let pos=-start,guard=0;
+ while(pos<R+0.001&&guard++<1000){let a=Math.max(0,pos),b=Math.min(R,pos+T);if(b-a>0.01)cuts.push(Math.round(b-a));pos+=p;}
+ return cuts;
+}
+function bestOffset(R,T,J,minCut){
+ const p=T+J;let best={s:0,score:Infinity,cuts:[]};
+ for(let s=0;s<p;s+=2){
+  const c=cutsFor(R,T,J,s), small=c.filter(x=>x<minCut).length;
+  const penalty=c.reduce((sum,x)=>sum+(x<minCut?Math.pow(minCut-x,2):0),0);
+  const score=small*1e7+penalty-Math.min(...c)*100;
+  if(score<best.score)best={s,score,cuts:c};
+ }
+ return best;
+}
+function currentOffset(R,T,J,axis='x'){
+ const mode=val('layoutMode'), field=axis==='y'?'offsetY':'offset', pitch=T+J;
+ if(mode==='manual')return ((Number(val(field))%pitch)+pitch)%pitch;
+ if(mode==='center')return pitch/2;
+ if(mode==='drain'&&view==='floor'){
+  const drain=objects.find(o=>o.view==='floor'&&o.type==='brunn');
+  if(drain){const pos=axis==='y'?drain.y:drain.x;return ((pos-pitch/2)%pitch+pitch)%pitch;}
+ }
+ return bestOffset(R,T,J,num('minCut')).s;
+}
+function floorOutline(x,y,w,h,notchW,notchH,shape){
+ if(shape==='L'&&notchW>0&&notchH>0)return `M ${x} ${y} L ${x+w-notchW} ${y} L ${x+w-notchW} ${y+notchH} L ${x+w} ${y+notchH} L ${x+w} ${y+h} L ${x} ${y+h} Z`;
+ return `M ${x} ${y} H ${x+w} V ${y+h} H ${x} Z`;
+}
+function draw(){
+ const svg=$('drawing'), W=positive('roomW'), H=positive('roomL'), TW=positive('tileW'), TH=positive('tileH'), J=num('joint');
+ const shape=val('roomShape'), nw=Math.min(W,num('notchW')), nh=Math.min(H,num('notchH'));
+ const sw=620/W, sh=365/H, s=Math.min(sw,sh), dw=W*s,dh=H*s, ox=(720-dw)/2, oy=35+(380-dh)/2;
+ const R=W, T=TW, offset=currentOffset(R,TW,J,'x'), offsetY=currentOffset(H,TH,J,'y');
+ let markup=`<defs><clipPath id="roomclip"><path d="${floorOutline(ox,oy,dw,dh,nw*s,nh*s,shape)}"/></clipPath></defs>
+ <rect x="0" y="0" width="720" height="470" rx="10" fill="#f8faf8"/>
+ <path d="${floorOutline(ox,oy,dw,dh,nw*s,nh*s,shape)}" fill="#e8e8e1" stroke="#263b34" stroke-width="3"/>
+ <g clip-path="url(#roomclip)">`;
+ const pitchX=TW+J, pitchY=TH+J, offX=offset, offY=offsetY, pattern=val('pattern');
+ const lineStyle='stroke="#87958d" stroke-width="1"';
+ if(pattern==='diagonal'){
+  const cx=ox+dw/2,cy=oy+dh/2,span=1100;
+  markup+=`<g transform="rotate(45 ${cx} ${cy})">`;
+  for(let x=-span+((offX*s)%(pitchX*s));x<720+span;x+=pitchX*s)markup+=`<line x1="${x}" y1="-${span}" x2="${x}" y2="${span}" ${lineStyle}/>`;
+  for(let y=-span+((offY*s)%(pitchY*s));y<470+span;y+=pitchY*s)markup+=`<line x1="-${span}" y1="${y}" x2="${span}" y2="${y}" ${lineStyle}/>`;
+  markup+='</g>';
+ }else{
+  const firstY=oy-((offY*s)%(pitchY*s));
+  for(let y=firstY;y<oy+dh+1;y+=pitchY*s)markup+=`<line x1="${ox}" y1="${y}" x2="${ox+dw}" y2="${y}" ${lineStyle}/>`;
+  let row=0;
+  for(let y=firstY;y<oy+dh;y+=pitchY*s,row++){
+   const stagger=pattern==='half'?pitchX/2:pattern==='third'?pitchX/3:0;
+   const xOffset=((offX+stagger*row)*s)%(pitchX*s);
+   for(let x=ox-xOffset;x<ox+dw+1;x+=pitchX*s)markup+=`<line x1="${x}" y1="${Math.max(oy,y)}" x2="${x}" y2="${Math.min(oy+dh,y+pitchY*s)}" ${lineStyle}/>`;
+  }
+ }
+ // Visa kapmått längs överkant och vänsterkant som snabb arbetsreferens.
+ let capPosX=-offset, capIndexX=0;
+ while(capPosX<W&&capIndexX++<200){
+  const a=Math.max(0,capPosX),b=Math.min(W,capPosX+TW);
+  if(b>a&&((b-a)<TW-1)){
+   const lx=ox+((a+b)/2)*s;
+   markup+=`<text x="${lx}" y="${Math.min(oy+14,oy+dh-4)}" text-anchor="middle" font-size="10" font-weight="700" fill="#9a3412" stroke="#fff" stroke-width="2" paint-order="stroke">${Math.round(b-a)}</text>`;
+  }
+  capPosX+=TW+J;
+ }
+ let capPosY=-offsetY, capIndexY=0;
+ while(capPosY<H&&capIndexY++<200){
+  const a=Math.max(0,capPosY),b=Math.min(H,capPosY+TH);
+  if(b>a&&((b-a)<TH-1)){
+   const ly=oy+((a+b)/2)*s;
+   markup+=`<text x="${Math.min(ox+16,ox+dw-4)}" y="${ly}" text-anchor="middle" font-size="10" font-weight="700" fill="#9a3412" stroke="#fff" stroke-width="2" paint-order="stroke" transform="rotate(-90 ${Math.min(ox+16,ox+dw-4)} ${ly})">${Math.round(b-a)}</text>`;
+  }
+  capPosY+=TH+J;
+ }
+ for(const o of objects.filter(o=>o.view===view)){
+  const x=ox+(o.x||0)*s,y=oy+(o.y||0)*s,w=Math.max(1,o.w||100)*s,h=Math.max(1,o.h||100)*s,stroke=o.id===selectedId?'#9a3412':'#263b34',swid=o.id===selectedId?3:1.5;
+  if(o.type==='brunn'||o.type==='ror')markup+=`<circle data-object-id="${o.id}" cx="${x}" cy="${y}" r="${Math.max(4,(o.w||100)*s/2)}" fill="${colors[o.type]}" stroke="${stroke}" stroke-width="${swid}" style="cursor:pointer"/><circle data-object-id="${o.id}" cx="${x}" cy="${y}" r="${Math.max(1,(o.w||100)*s/5)}" fill="#fff" style="cursor:pointer"/>`;
+  else if(o.type==='horn')markup+=`<line data-object-id="${o.id}" x1="${x}" y1="${oy}" x2="${x}" y2="${oy+dh}" stroke="${colors.horn}" stroke-width="4" stroke-dasharray="8 5" style="cursor:pointer"/>`;
+  else markup+=`<rect data-object-id="${o.id}" x="${x}" y="${y}" width="${w}" height="${h}" fill="${colors[o.type]}" fill-opacity=".85" stroke="${stroke}" stroke-width="${swid}" style="cursor:pointer"/>`;
+  markup+=`<text data-object-label="${o.id}" x="${Math.min(710,Math.max(8,x+5))}" y="${Math.min(455,Math.max(14,y-5))}" font-size="12" fill="#263b34">${escapeXml(o.name)}</text>`;
+ }
+ markup+=`</g><path d="${floorOutline(ox,oy,dw,dh,nw*s,nh*s,shape)}" fill="none" stroke="#263b34" stroke-width="3"/>
+ <text x="${ox+dw/2}" y="${oy-12}" text-anchor="middle" font-size="13" fill="#263b34">${W} mm</text>
+ <text x="${ox+dw+10}" y="${oy+dh/2}" font-size="13" fill="#263b34" transform="rotate(90 ${ox+dw+10} ${oy+dh/2})">${H} mm</text>`;
+ svg.innerHTML=markup;
+ applyZoomViewBox();
+ const cuts=cutsFor(W,TW,J,offset), min=num('minCut'), small=cuts.filter(c=>c<min);
+ $('drawingStatus').textContent=`${view==='floor'?'Golv':'Vägg'} · platta ${TW} × ${TH} mm · fog ${J} mm · förskjutning X ${Math.round(offset)} mm, Y ${Math.round(offsetY)} mm. Kantkapningar längs bredden: ${cuts.join(', ')} mm.`;
+ updateMaterials(small,cuts);
+}
+function escapeXml(s){return String(s).replace(/[<>&'"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;',"'":'&apos;','"':'&quot;'}[c]));}
+function updateMaterials(small,cuts){
+ const W=positive('roomW'), H=positive('roomL'), TW=positive('tileW'), TH=positive('tileH'), J=num('joint');
+ let gross=W*H;
+ if(view==='floor'&&val('roomShape')==='L')gross=Math.max(0,W*H-Math.min(W,num('notchW'))*Math.min(H,num('notchH')));
+ let openings=0;
+ for(const o of objects.filter(o=>o.view===view)){
+  if(view==='floor'){
+   if(o.type==='brunn'||o.type==='ror')openings+=Math.PI*Math.pow(Math.max(0,o.w||0)/2,2);
+   else if(o.type==='pelare')openings+=Math.max(0,o.w||0)*Math.max(0,o.h||0);
+  }else if(o.type==='dorr'||o.type==='fonster'||o.type==='trumma'){
+   openings+=Math.max(0,o.w||0)*Math.max(0,o.h||0);
+  }
+ }
+ const area=Math.max(0,gross-openings)/1e6;
+ const tileArea=TW*TH/1e6;
+ const patternWaste=val('pattern')==='diagonal'?1.15:val('pattern')==='half'||val('pattern')==='third'?1.05:1;
+ const n=Math.ceil(area/tileArea*patternWaste), total=Math.ceil(n*(1+num('waste')/100)), box=Math.ceil(total/positive('tilesBox')), fix=area*num('fixRate'), bags=Math.ceil(fix/positive('bagSize'));
+ const grout=area*((TW+TH)/(TW*TH))*J*positive('groutDepth')*1.6;
+ const fmt=n=>Number(n).toLocaleString('sv-SE',{maximumFractionDigits:2});
+ $('areaMetric').textContent=fmt(area)+' m²';$('tilesMetric').textContent=fmt(total);$('boxesMetric').textContent=fmt(box);$('fixMetric').textContent=fmt(fix)+' kg';$('bagsMetric').textContent=fmt(bags);$('groutMetric').textContent=fmt(grout)+' kg';
+ $('cutWarning').className='notice '+(small.length?'':'good');
+ $('cutWarning').textContent=small.length?`${small.length} kantkapningar understiger ${num('minCut')} mm: ${small.join(', ')} mm. Prova automatisk centrering eller justera förskjutningen.`:`Inga kapbredder under ${num('minCut')} mm längs rummets bredd med nuvarande läge. Kontrollera även kapningar i rummets andra riktning.`;
+ $('cutWarning').textContent+=' Materialmängderna är uppskattningar; överlappande hinder kan ge viss avvikelse.';
+}
+function renderList(){
+ const list=$('objectList');list.innerHTML='';
+ const visible=objects.filter(o=>o.view===view);
+ if(!visible.length){list.innerHTML='<p class="hint">Inga objekt i den här vyn ännu.</p>'}
+ for(const o of visible){
+  const div=document.createElement('div');div.className='objrow'+(o.id===selectedId?' selected':'');
+  div.innerHTML=`<button type="button" class="objselect" aria-label="Välj ${escapeXml(o.name)}">✎</button><div class="objname"><strong>${escapeXml(o.name)}</strong><small>${names[o.type]} · X ${o.x}, Y ${o.y} · ${o.w} × ${o.h} mm</small></div><button type="button" class="objduplicate" title="Kopiera objekt">Kopiera</button><button type="button" class="danger objdelete">Ta bort</button>`;
+  div.querySelector('.objselect').onclick=()=>{selectedId=o.id;renderList();renderEditor();draw();$('workspaceHint').textContent=`Valt: ${o.name} · ändra måtten i panelen Objekt och hinder.`};
+  div.querySelector('.objname').onclick=()=>{selectedId=o.id;renderList();renderEditor();draw();$('workspaceHint').textContent=`Valt: ${o.name} · ändra måtten i panelen Objekt och hinder.`};
+  div.querySelector('.objduplicate').onclick=()=>{pushHistory();const copy={...o,id:nextId++,name:o.name+' kopia',x:Math.min(positive('roomW'),o.x+100),y:Math.min(positive('roomL'),o.y+100)};objects.push(copy);selectedId=copy.id;renderList();renderEditor();draw();pushHistory();scheduleAutoSave();};
+  div.querySelector('.objdelete').onclick=()=>{pushHistory();objects=objects.filter(a=>a.id!==o.id);if(selectedId===o.id)selectedId=objects.find(a=>a.view===view)?.id||null;renderList();renderEditor();draw();pushHistory();scheduleAutoSave()};
+  list.appendChild(div);
+ }
+}
+function renderEditor(){
+ const o=objects.find(a=>a.id===selectedId&&a.view===view);
+ $('editor').classList.toggle('hidden',!o);if(!o)return;
+ $('objName').value=o.name;$('objX').value=o.x;$('objY').value=o.y;$('objW').value=o.w;$('objH').value=o.h;$('objHeight').value=o.hgt||2400;
+ $('objHeightField').classList.toggle('hidden',o.type!=='trumma');
+}
+function updateObject(key,value){const o=objects.find(a=>a.id===selectedId);if(!o)return;o[key]=value;renderList();draw();scheduleAutoSave();}
+function applyZoomViewBox(){
+ const width=720/zoomLevel,height=470/zoomLevel;
+ const cx=Math.max(width/2,Math.min(720-width/2,zoomCenter.x)),cy=Math.max(height/2,Math.min(470-height/2,zoomCenter.y));
+ drawing.setAttribute('viewBox',`${cx-width/2} ${cy-height/2} ${width} ${height}`);
+}
+function setZoom(next,center){
+ zoomLevel=Math.max(1,Math.min(6,next));
+ if(center)zoomCenter=center;
+ else if(zoomLevel===1)zoomCenter={x:360,y:235};
+ else {
+  const o=objects.find(o=>o.id===selectedId&&o.view===view);
+  if(o){const W=positive('roomW'),H=positive('roomL'),sc=Math.min(620/W,365/H),dw=W*sc,dh=H*sc,ox=(720-dw)/2,oy=35+(380-dh)/2;zoomCenter={x:ox+o.x*sc,y:oy+o.y*sc};}
+ }
+ draw();
+}
+function pushHistory(){
+ const state=JSON.stringify(getState());
+ if(!undoStack.length||undoStack[undoStack.length-1]!==state)undoStack.push(state);
+ if(undoStack.length>50)undoStack.shift();
+ redoStack=[];
+ updateHistoryButtons();
+}
+function updateHistoryButtons(){$('undoAction').disabled=undoStack.length<2;$('redoAction').disabled=redoStack.length===0;}
+function undo(){
+ if(undoStack.length<2)return;
+ redoStack.push(undoStack.pop());
+ applyState(JSON.parse(undoStack[undoStack.length-1]));
+ updateHistoryButtons();scheduleAutoSave();
+}
+function redo(){
+ if(!redoStack.length)return;
+ const state=redoStack.pop();undoStack.push(state);applyState(JSON.parse(state));updateHistoryButtons();scheduleAutoSave();
+}
+function saveLocalAutomatically(){
+ try{localStorage.setItem('plattsattarenProject',JSON.stringify(getState()));$('saveStatus').textContent='Autosparat på den här enheten.';}
+ catch(e){$('saveStatus').textContent='Autosparning misslyckades. Exportera projektfilen som säkerhetskopia.';}
+}
+function scheduleAutoSave(){clearTimeout(autoSaveTimer);autoSaveTimer=setTimeout(saveLocalAutomatically,350);}
+$('undoAction').onclick=undo;$('redoAction').onclick=redo;
+$('zoomIn').onclick=()=>setZoom(zoomLevel*1.5);
+$('zoomOut').onclick=()=>setZoom(zoomLevel/1.5);
+$('fitDrawing').onclick=()=>{zoomLevel=1;zoomCenter={x:360,y:235};draw();$('workspaceHint').textContent='Hela ritningen visas.'};
+drawing.addEventListener('wheel',e=>{e.preventDefault();const r=drawing.getBoundingClientRect(),vb=drawing.viewBox.baseVal;const point={x:vb.x+(e.clientX-r.left)*vb.width/r.width,y:vb.y+(e.clientY-r.top)*vb.height/r.height};setZoom(zoomLevel*(e.deltaY<0?1.15:1/1.15),point);},{passive:false});
+$('objName').addEventListener('focus',pushHistory);
+$('objX').addEventListener('focus',pushHistory);$('objY').addEventListener('focus',pushHistory);$('objW').addEventListener('focus',pushHistory);$('objH').addEventListener('focus',pushHistory);$('objHeight').addEventListener('focus',pushHistory);
+['objName','objX','objY','objW','objH','objHeight'].forEach(id=>$(id).addEventListener('change',()=>{pushHistory();scheduleAutoSave()}));
+$('objName').addEventListener('input',e=>updateObject('name',e.target.value));
+[['objX','x'],['objY','y'],['objW','w'],['objH','h'],['objHeight','hgt']].forEach(([id,key])=>$(id).addEventListener('input',e=>updateObject(key,Math.max(0,Number(e.target.value)||0))));
+$('deleteSelected').onclick=()=>{objects=objects.filter(o=>o.id!==selectedId);selectedId=objects.find(o=>o.view===view)?.id||null;renderList();renderEditor();draw()};
+document.querySelectorAll('[data-add]').forEach(btn=>btn.addEventListener('click',()=>{
+ if(btn.dataset.view)return;
+ pushHistory();
+ const type=btn.dataset.add, n=objects.filter(o=>o.type===type).length+1;
+ const o={id:nextId++,view,type,name:`${names[type]} ${n}`,x:300,y:300,w:type==='brunn'?150:type==='trumma'?400:type==='fonster'?800:250,h:type==='brunn'?150:type==='trumma'?200:type==='fonster'?700:100,hgt:2400};
+ objects.push(o);selectedId=o.id;renderList();renderEditor();draw();pushHistory();scheduleAutoSave();
+}));
+
+$('drawing').addEventListener('click',e=>{
+ const target=e.target.closest('[data-object-id]');
+ if(!target)return;
+ const id=Number(target.getAttribute('data-object-id'));
+ const o=objects.find(item=>item.id===id);
+ if(!o)return;
+ selectedId=id;
+ if(o.view!==view)setView(o.view);
+ renderList();renderEditor();draw();
+ $('workspaceHint').textContent=`Valt: ${o.name} · ändra måtten i panelen Objekt och hinder.`;
+});
+
+// Touch- och musdragning direkt på ritningen.
+let dragState=null;
+const drawing=$('drawing');
+function svgPoint(evt){
+ const r=drawing.getBoundingClientRect(),vb=drawing.viewBox.baseVal;
+ return {x:vb.x+(evt.clientX-r.left)*vb.width/r.width,y:vb.y+(evt.clientY-r.top)*vb.height/r.height};
+}
+drawing.addEventListener('pointerdown',e=>{
+ touchPoints.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(touchPoints.size>=2){
+  const pts=[...touchPoints.entries()].slice(-2),a=pts[0][1],b=pts[1][1];
+  const startMidX=(a.x+b.x)/2,startMidY=(a.y+b.y)/2;
+  pinchState={ids:pts.map(p=>p[0]),startDistance:Math.max(1,Math.hypot(b.x-a.x,b.y-a.y)),startZoom:zoomLevel,startMidX,startMidY,cx:zoomCenter.x,cy:zoomCenter.y};
+  panState=null;dragState=null;
+  try{drawing.setPointerCapture(e.pointerId)}catch(_){}
+  return;
+ }
+ const target=e.target.closest('[data-object-id]');
+ if(!target){
+  if(zoomLevel>1){const p=svgPoint(e);panState={pointerId:e.pointerId,startClientX:e.clientX,startClientY:e.clientY,cx:zoomCenter.x,cy:zoomCenter.y};try{drawing.setPointerCapture(e.pointerId)}catch(_){}}
+  return;
+ }
+ const id=Number(target.getAttribute('data-object-id'));
+ const o=objects.find(item=>item.id===id&&item.view===view);
+ if(!o)return;
+ pushHistory();selectedId=id;
+ const p=svgPoint(e),W=positive('roomW'),H=positive('roomL');
+ const scale=Math.min(620/W,365/H);
+ dragState={id,pointerId:e.pointerId,startX:p.x,startY:p.y,x:o.x,y:o.y,scale,moved:false};
+ try{drawing.setPointerCapture(e.pointerId)}catch(_){}
+ renderList();renderEditor();draw();
+});
+drawing.addEventListener('pointermove',e=>{
+ if(touchPoints.has(e.pointerId))touchPoints.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(pinchState&&pinchState.ids.includes(e.pointerId)){
+  const a=touchPoints.get(pinchState.ids[0]),b=touchPoints.get(pinchState.ids[1]);
+  if(a&&b){
+   const r=drawing.getBoundingClientRect(),dist=Math.max(1,Math.hypot(b.x-a.x,b.y-a.y)),midX=(a.x+b.x)/2,midY=(a.y+b.y)/2;
+   zoomLevel=Math.max(1,Math.min(6,pinchState.startZoom*dist/pinchState.startDistance));
+   zoomCenter={x:pinchState.cx-(midX-pinchState.startMidX)*(720/zoomLevel)/r.width,y:pinchState.cy-(midY-pinchState.startMidY)*(470/zoomLevel)/r.height};
+   applyZoomViewBox();
+  }
+  return;
+ }
+ if(panState&&panState.pointerId===e.pointerId){
+  const r=drawing.getBoundingClientRect();zoomCenter={x:panState.cx-(e.clientX-panState.startClientX)*(720/zoomLevel)/r.width,y:panState.cy-(e.clientY-panState.startClientY)*(470/zoomLevel)/r.height};applyZoomViewBox();return;
+ }
+ if(!dragState||dragState.pointerId!==e.pointerId)return;
+ const p=svgPoint(e),o=objects.find(item=>item.id===dragState.id);
+ if(!o)return;
+ const dx=(p.x-dragState.startX)/dragState.scale,dy=(p.y-dragState.startY)/dragState.scale;
+ if(Math.abs(dx)+Math.abs(dy)>1)dragState.moved=true;
+ if(!dragState.moved)return;
+ const W=positive('roomW'),H=positive('roomL');
+ o.x=Math.round(Math.max(0,Math.min(W,dragState.x+dx)));
+ o.y=Math.round(Math.max(0,Math.min(H,dragState.y+dy)));
+ const tx=(o.x-dragState.x)*dragState.scale,ty=(o.y-dragState.y)*dragState.scale;
+ drawing.querySelectorAll(`[data-object-id="${o.id}"],[data-object-label="${o.id}"]`).forEach(el=>{
+  el.setAttribute('transform',`translate(${tx} ${ty})`);
+ });
+ $('objX').value=o.x;$('objY').value=o.y;
+});
+function finishDrag(e){
+ if(e)touchPoints.delete(e.pointerId);
+ if(pinchState&&(!e||pinchState.ids.includes(e.pointerId))){pinchState=null;panState=null;dragState=null;draw();return;}
+ if(panState&&(!e||panState.pointerId===e.pointerId)){panState=null;return;}
+ if(dragState&&(!e||dragState.pointerId===e.pointerId)){dragState=null;renderList();renderEditor();draw();pushHistory();scheduleAutoSave();}
+}
+drawing.addEventListener('pointerup',finishDrag);
+drawing.addEventListener('pointercancel',finishDrag);
+$('fitDrawing').onclick=()=>{draw();$('workspaceHint').textContent='Ritningen har anpassats till aktuella rums- och plattmått.'};
+$('focusObjects').onclick=()=>{$('objectsCard').scrollIntoView({behavior:'smooth',block:'start'});$('workspaceHint').textContent='Välj ett objekt i listan för att redigera det.'};
+document.querySelectorAll('[data-add][data-view]').forEach(btn=>btn.addEventListener('click',()=>{
+ pushHistory();
+ const target=btn.dataset.view;
+ if(view!==target)setView(target);
+ const type=btn.dataset.add,n=objects.filter(o=>o.type===type).length+1;
+ const o={id:nextId++,view:target,type,name:`${names[type]} ${n}`,x:300,y:300,w:type==='brunn'?150:type==='trumma'?400:type==='fonster'?800:250,h:type==='brunn'?150:type==='trumma'?200:type==='fonster'?700:100,hgt:2400};
+ objects.push(o);selectedId=o.id;renderList();renderEditor();draw();pushHistory();scheduleAutoSave();
+ $('workspaceHint').textContent=`Tillagt: ${o.name}. Redigera placering och storlek i objektpanelen.`;
+}));
+
+function setView(v){view=v;$('floorTab').classList.toggle('active',v==='floor');$('wallTab').classList.toggle('active',v==='wall');$('floorAdd').classList.toggle('hidden',v!=='floor');$('wallAdd').classList.toggle('hidden',v!=='wall');renderList();renderEditor();draw();}
+$('floorTab').onclick=()=>setView('floor');$('wallTab').onclick=()=>setView('wall');
+$('roomShape').addEventListener('change',()=>{const l=val('roomShape')==='L';$('notchWField').classList.toggle('hidden',!l);$('notchHField').classList.toggle('hidden',!l);draw()});
+fields.forEach(id=>{
+ $(id).addEventListener('focus',pushHistory);
+ $(id).addEventListener('input',()=>{draw();scheduleAutoSave()});
+});
+$('layoutMode').addEventListener('change',()=>{ const manual=val('layoutMode')==='manual';$('offset').disabled=!manual;$('offsetY').disabled=!manual;draw();scheduleAutoSave()});
+$('offset').disabled=true;$('offsetY').disabled=true;
+function getState(){return {version:1,fields:Object.fromEntries(fields.map(id=>[id,val(id)])),view,objects,nextId};}
+function applyState(s){
+ if(s.fields)fields.forEach(id=>{if(s.fields[id]!==undefined)$(id).value=s.fields[id]});
+ view=s.view||'floor';objects=Array.isArray(s.objects)?s.objects:[];nextId=s.nextId||Math.max(0,...objects.map(o=>o.id))+1;selectedId=objects.find(o=>o.view===view)?.id||null;
+ $('roomShape').dispatchEvent(new Event('change'));$('layoutMode').dispatchEvent(new Event('change'));setView(view);
+}
+$('saveProject').onclick=()=>{try{localStorage.setItem('plattsattarenProject',JSON.stringify(getState()));$('saveStatus').textContent='Projektet sparades på den här enheten.'}catch(e){$('saveStatus').textContent='Kunde inte spara lokalt. Exportera projektfilen i stället.'}};
+$('exportProject').onclick=()=>{const blob=new Blob([JSON.stringify(getState(),null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(val('projectName')||'plattsattning').replace(/[^a-z0-9åäö_-]/gi,'_')+'.json';a.click();URL.revokeObjectURL(a.href)};
+$('importProject').onclick=()=>$('importFile').click();
+$('importFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{applyState(JSON.parse(await f.text()));$('saveStatus').textContent='Projektfil importerad.'}catch(err){$('saveStatus').textContent='Filen kunde inte läsas. Kontrollera att det är en projektfil från appen.'}e.target.value=''};
+$('printProject').onclick=()=>{
+ $('printSummary').classList.remove('hidden');
+ $('printSummary').innerHTML=`<h2>Arbetsunderlag – ${escapeXml(val('projectName')||'Plattsättning')}</h2><p><strong>Rum:</strong> ${positive('roomW')} × ${positive('roomL')} mm · <strong>Vy:</strong> ${view==='floor'?'Golv':'Vägg'}</p><p><strong>Platta:</strong> ${positive('tileW')} × ${positive('tileH')} mm · <strong>Fog:</strong> ${num('joint')} mm · <strong>Mönster:</strong> ${escapeXml($('pattern').selectedOptions[0].textContent)}</p><p><strong>Nettoyta:</strong> ${$('areaMetric').textContent} · <strong>Plattor inkl. spill:</strong> ${$('tilesMetric').textContent} · <strong>Kartonger:</strong> ${$('boxesMetric').textContent}</p><p><strong>Fix:</strong> ${$('fixMetric').textContent} · <strong>Fixsäckar:</strong> ${$('bagsMetric').textContent} · <strong>Fogmassa:</strong> ${$('groutMetric').textContent}</p><p><strong>Objekt:</strong> ${objects.filter(o=>o.view===view).map(o=>`${escapeXml(o.name)} (X ${o.x}, Y ${o.y}, ${o.w} × ${o.h} mm)`).join('; ')||'Inga'}</p><p><em>Beräkningsunderlag – kontrollera alltid mått, underlag och produktåtgång på plats.</em></p>`;
+ window.print();
+ setTimeout(()=>$('printSummary').classList.add('hidden'),1000);
+};
+$('downloadSvg').onclick=()=>{const clone=$('drawing').cloneNode(true);clone.setAttribute('xmlns','http://www.w3.org/2000/svg');const blob=new Blob([new XMLSerializer().serializeToString(clone)],{type:'image/svg+xml'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='plattsattningsritning.svg';a.click();URL.revokeObjectURL(a.href)};
+try{const saved=localStorage.getItem('plattsattarenProject');if(saved)applyState(JSON.parse(saved));else {renderList();renderEditor();draw()}}catch(e){renderList();renderEditor();draw()}
+undoStack=[JSON.stringify(getState())];redoStack=[];updateHistoryButtons();
+fields.forEach(id=>$(id).addEventListener('change',()=>{pushHistory();scheduleAutoSave()}));
+})();
+</script>
+</body></html>
