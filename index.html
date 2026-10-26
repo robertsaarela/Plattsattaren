@@ -132,6 +132,26 @@ main{grid-template-columns:1fr}
   </div>
   <div class="actions no-print" style="margin-top:10px"><button id="drainAlign" type="button">Centrera fog på golvbrunn</button></div>
   <p class="hint">Förskjutningen påverkar foglinjernas läge. Automatläget försöker minska smala kantbitar. Fogcentrering innebär att en foglinje går genom brunnens centrum.</p>
+  <h3>Väggar och fogföljd</h3>
+  <p class="hint">Som standard följer alla fyra väggar golvets foglinjer. Avmarkera en vägg om den ska läggas oberoende.</p>
+  <div class="fieldgrid" id="wallSettings">
+    <label class="checkline"><input type="checkbox" id="followA" checked> Vägg A – fogföljd från golv</label>
+    <label class="checkline"><input type="checkbox" id="followB" checked> Vägg B – fogföljd från golv</label>
+    <label class="checkline"><input type="checkbox" id="followC" checked> Vägg C – fogföljd från golv</label>
+    <label class="checkline"><input type="checkbox" id="followD" checked> Vägg D – fogföljd från golv</label>
+  </div>
+  <h3>Plattformat per vägg</h3>
+  <p class="hint">Standard är samma format som golvet. Slå på eget format där det behövs.</p>
+  <div class="fieldgrid">
+    <label class="checkline"><input type="checkbox" id="customA"> Eget format på A</label><label class="checkline"><input type="checkbox" id="customB"> Eget format på B</label>
+    <label class="checkline"><input type="checkbox" id="customC"> Eget format på C</label><label class="checkline"><input type="checkbox" id="customD"> Eget format på D</label>
+  </div>
+  <div class="fieldgrid three" style="margin-top:8px">
+    <div><label for="tileWA">Vägg A (mm)</label><input id="tileWA" type="number" min="1" value="600"></div><div><label for="tileHA">Höjd A (mm)</label><input id="tileHA" type="number" min="1" value="600"></div>
+    <div><label for="tileWB">Vägg B (mm)</label><input id="tileWB" type="number" min="1" value="600"></div><div><label for="tileHB">Höjd B (mm)</label><input id="tileHB" type="number" min="1" value="600"></div>
+    <div><label for="tileWC">Vägg C (mm)</label><input id="tileWC" type="number" min="1" value="600"></div><div><label for="tileHC">Höjd C (mm)</label><input id="tileHC" type="number" min="1" value="600"></div>
+    <div><label for="tileWD">Vägg D (mm)</label><input id="tileWD" type="number" min="1" value="600"></div><div><label for="tileHD">Höjd D (mm)</label><input id="tileHD" type="number" min="1" value="600"></div>
+  </div>
 </section>
 <section class="card wide" id="drawingCard">
   <div class="row" style="justify-content:space-between">
@@ -161,10 +181,10 @@ main{grid-template-columns:1fr}
 <section class="card" id="objectsCard">
   <h2>Objekt och hinder</h2>
   <div id="floorAdd" class="fieldgrid">
-    <button data-add="brunn">＋ Golvbrunn</button><button data-add="ror">＋ Rör / genomföring</button><button data-add="pelare">＋ Pelare / hinder</button>
+    <button data-add="brunn">＋ Golvbrunn</button><button data-add="ror">＋ Rör / genomföring</button><button data-add="pelare">＋ Pelare / hinder</button><button data-add="trumma" data-view="floor">＋ Trumma på golv</button><button data-add="horn" data-view="floor">＋ Ytterhörn på golv</button>
   </div>
   <div id="wallAdd" class="fieldgrid hidden">
-    <button data-add="fonster">＋ Fönster</button><button data-add="dorr">＋ Dörr</button><button data-add="trumma">＋ Trumma</button><button data-add="horn">＋ Ytterhörn</button>
+    <button data-add="fonster">＋ Fönster</button><button data-add="dorr">＋ Dörr</button><button data-add="trumma">＋ Trumma</button><button data-add="horn">＋ Ytterhörn</button><button data-add="utbyggnad">＋ Utbyggnad på vägg</button>
   </div>
   <h3>Objekt i vald vy / helrum</h3>
   <div id="objectList" class="objectlist"></div>
@@ -220,12 +240,15 @@ main{grid-template-columns:1fr}
 (() => {
 const $=id=>document.getElementById(id);
 const drawing=$('drawing');
-const fields=['projectName','roomShape','roomW','roomL','roomH','activeWall','notchW','notchH','tileW','tileH','joint','minCut','layoutMode','offset','offsetY','pattern','waste','tilesBox','fixRate','bagSize','groutDepth'];
+const fields=['projectName','roomShape','roomW','roomL','roomH','activeWall','notchW','notchH','tileW','tileH','joint','minCut','layoutMode','offset','offsetY','pattern','waste','tilesBox','fixRate','bagSize','groutDepth','tileWA','tileHA','tileWB','tileHB','tileWC','tileHC','tileWD','tileHD'];
 let view='room', selectedId=null, nextId=1, objects=[];
 let zoomLevel=1, zoomCenter={x:360,y:235}, panState=null, pinchState=null, touchPoints=new Map();
 let undoStack=[], redoStack=[], autoSaveTimer=null, editBeforeState=null, restoringState=false;
-const names={brunn:'Golvbrunn',ror:'Rör / genomföring',pelare:'Pelare / hinder',fonster:'Fönster',dorr:'Dörr',trumma:'Trumma',horn:'Ytterhörn'};
-const colors={brunn:'#4b6475',ror:'#168aad',pelare:'#64748b',fonster:'#7dd3fc',dorr:'#a7f3d0',trumma:'#f59e0b',horn:'#dc2626'};
+const names={brunn:'Golvbrunn',ror:'Rör / genomföring',pelare:'Pelare / hinder',fonster:'Fönster',dorr:'Dörr',trumma:'Trumma',horn:'Ytterhörn',utbyggnad:'Utbyggnad på vägg'};
+const colors={brunn:'#4b6475',ror:'#168aad',pelare:'#64748b',fonster:'#7dd3fc',dorr:'#a7f3d0',trumma:'#f59e0b',horn:'#dc2626',utbyggnad:'#c084fc'};
+const followsFloor=side=>{const el=$('follow'+side);return !el||el.checked};
+const wallUsesCustom=side=>{const el=$('custom'+side);return !!(el&&el.checked)};
+function tileForWall(side){return wallUsesCustom(side)?{w:positive('tileW'+side),h:positive('tileH'+side)}:{w:positive('tileW'),h:positive('tileH')}}
 const num=id=>Math.max(0,Number($(id).value)||0);
 const positive=id=>Math.max(1,Number($(id).value)||1);
 const val=id=>$(id).value;
@@ -254,6 +277,14 @@ function bestOffset(R,T,J,minCut){
 }
 function currentOffset(R,T,J,axis='x'){
  const mode=val('layoutMode'), field=axis==='y'?'offsetY':'offset', pitch=T+J;
+ if(view==='wall'&&followsFloor(val('activeWall'))){
+  const side=val('activeWall'), floorAxis=axis==='y'?'y':(['B','D'].includes(side)?'y':'x');
+  const ft=floorAxis==='y'?positive('tileH'):positive('tileW'), fp=ft+num('joint');
+  if(mode==='manual'){const v=Number(val(floorAxis==='y'?'offsetY':'offset'))||0;return ((v%fp)+fp)%fp;}
+  if(mode==='center')return fp/2;
+  if(mode==='drain'){const d=objects.find(o=>o.view==='floor'&&o.type==='brunn');if(d){const pos=floorAxis==='y'?Number(d.y)||0:Number(d.x)||0;return ((-pos%fp)+fp)%fp;}}
+  return bestOffset(floorAxis==='y'?positive('roomL'):positive('roomW'),ft,num('joint'),num('minCut')).s;
+ }
  if(mode==='manual')return ((Number(val(field))%pitch)+pitch)%pitch;
  if(mode==='center')return pitch/2;
  if(mode==='drain'&&(view==='floor'||view==='room')){
@@ -268,7 +299,7 @@ function floorOutline(x,y,w,h,notchW,notchH,shape){
 }
 function draw(){
  if(view==='room'){drawRoomOverview();return;}
- const svg=$('drawing'), W=view==='wall'&&['B','D'].includes(val('activeWall'))?positive('roomL'):positive('roomW'), H=view==='wall'?positive('roomH'):positive('roomL'), TW=positive('tileW'), TH=positive('tileH'), J=num('joint');
+ const svg=$('drawing'), W=view==='wall'&&['B','D'].includes(val('activeWall'))?positive('roomL'):positive('roomW'), H=view==='wall'?positive('roomH'):positive('roomL'), dims=view==='wall'?tileForWall(val('activeWall')):{w:positive('tileW'),h:positive('tileH')}, TW=dims.w, TH=dims.h, J=num('joint');
  const shape=val('roomShape'), nw=Math.min(W,num('notchW')), nh=Math.min(H,num('notchH'));
  const sw=620/W, sh=365/H, s=Math.min(sw,sh), dw=W*s,dh=H*s, ox=(720-dw)/2, oy=35+(380-dh)/2;
  const R=W, T=TW, offset=currentOffset(R,TW,J,'x'), offsetY=currentOffset(H,TH,J,'y');
@@ -352,16 +383,17 @@ function drawRoomOverview(){
   {side:'D',x:536,y:226,w:164,h:135,wallW:L,label:`VÄGG D · ${L} mm`}
  ];
  for(const q of panels){
+  const dims=tileForWall(q.side), wx=dims.w+J, hy=dims.h+J;
   const pad=6,labelY=q.y+13,px=q.x+5,py=q.y+25,pw=q.w-10,ph=q.h-35,sc=Math.min(pw/q.wallW,ph/RH),dw=q.wallW*sc,dh=RH*sc,ox=px+(pw-dw)/2,oy=py+(ph-dh)/2;
   m+=`<text x="${q.x+2}" y="${labelY}" font-size="11" font-weight="700" fill="#263b34">${q.label}</text><rect x="${ox}" y="${oy}" width="${dw}" height="${dh}" fill="#e8e8e1" stroke="#263b34" stroke-width="1.5"/>`;
-  for(let x=ox;x<ox+dw+1;x+=pX*sc)m+=`<line x1="${x}" y1="${oy}" x2="${x}" y2="${oy+dh}" stroke="#87958d" stroke-width=".7"/>`;
-  for(let y=oy;y<oy+dh+1;y+=pY*sc)m+=`<line x1="${ox}" y1="${y}" x2="${ox+dw}" y2="${y}" stroke="#87958d" stroke-width=".7"/>`;
+  for(let x=ox;x<ox+dw+1;x+=wx*sc)m+=`<line x1="${x}" y1="${oy}" x2="${x}" y2="${oy+dh}" stroke="#87958d" stroke-width=".7"/>`;
+  for(let y=oy;y<oy+dh+1;y+=hy*sc)m+=`<line x1="${ox}" y1="${y}" x2="${ox+dw}" y2="${y}" stroke="#87958d" stroke-width=".7"/>`;
   for(const o of objects.filter(o=>o.view==='wall'&&(o.wallSide||'A')===q.side)){
    const x=ox+(o.x||0)*sc,y=oy+(RH-(o.y||0)-(o.h||0))*sc,w=Math.max(1,o.w||100)*sc,h=Math.max(1,o.h||100)*sc,stroke=o.id===selectedId?'#9a3412':'#263b34';
    m+=`<rect data-object-id="${o.id}" x="${x}" y="${y}" width="${w}" height="${h}" fill="${colors[o.type]}" fill-opacity=".85" stroke="${stroke}" stroke-width="1.2"/>`;
   }
  }
- m+=`<text x="352" y="390" font-size="10" fill="#64756b">Takhöjd: ${RH} mm · X mäts från vänster, Y från golv.</text><text x="352" y="410" font-size="10" fill="#64756b">Välj objekt i listan för att ändra placering och storlek.</text>`;
+ m+=`<text x="352" y="390" font-size="10" fill="#64756b">Takhöjd: ${RH} mm · X mäts från vänster, Y från golv.</text><text x="352" y="410" font-size="10" fill="#64756b">Välj objekt i listan för att ändra placering och storlek. Fogföljd och plattformat kan ställas in separat för varje vägg.</text>`;
  svg.innerHTML=m;applyZoomViewBox();
  $('drawingStatus').textContent=`Helrum · golv ${W} × ${L} mm · takhöjd ${RH} mm · golv ${fmtArea(W*L)} m² · väggar ${fmtArea(2*(W+L)*RH)} m².`;
  updateMaterials([],[]);
@@ -468,7 +500,7 @@ document.querySelectorAll('[data-add]').forEach(btn=>btn.addEventListener('click
  if(btn.dataset.view)return;
  pushHistory();
  const type=btn.dataset.add, objectView=view==='room'?(['brunn','ror','pelare'].includes(type)?'floor':'wall'):view, n=objects.filter(o=>o.type===type).length+1;
- const o={id:nextId++,view:objectView,wallSide:objectView==='wall'?val('activeWall'):'A',type,name:`${names[type]} ${n}`,x:300,y:300,w:type==='brunn'?150:type==='trumma'?400:type==='fonster'?800:250,h:type==='brunn'?150:type==='trumma'?200:type==='fonster'?700:100,hgt:positive('roomH')};
+ const o={id:nextId++,view:objectView,wallSide:objectView==='wall'?val('activeWall'):'A',type,name:`${names[type]} ${n}`,x:300,y:300,w:type==='brunn'?150:type==='trumma'?400:type==='fonster'?800:type==='utbyggnad'?500:250,h:type==='brunn'?150:type==='trumma'?200:type==='fonster'?700:type==='utbyggnad'?250:100,hgt:positive('roomH')};
  objects.push(o);selectedId=o.id;renderList();renderEditor();draw();pushHistory();scheduleAutoSave();
 }));
 
@@ -568,7 +600,7 @@ document.querySelectorAll('[data-add][data-view]').forEach(btn=>btn.addEventList
  const target=btn.dataset.view;
  if(view!=='room'&&view!==target)setView(target);
  const type=btn.dataset.add,n=objects.filter(o=>o.type===type).length+1;
- const o={id:nextId++,view:target,wallSide:target==='wall'?val('activeWall'):'A',type,name:`${names[type]} ${n}`,x:300,y:300,w:type==='brunn'?150:type==='trumma'?400:type==='fonster'?800:250,h:type==='brunn'?150:type==='trumma'?200:type==='fonster'?700:100,hgt:positive('roomH')};
+ const o={id:nextId++,view:target,wallSide:target==='wall'?val('activeWall'):'A',type,name:`${names[type]} ${n}`,x:300,y:300,w:type==='brunn'?150:type==='trumma'?400:type==='fonster'?800:type==='utbyggnad'?500:250,h:type==='brunn'?150:type==='trumma'?200:type==='fonster'?700:type==='utbyggnad'?250:100,hgt:positive('roomH')};
  objects.push(o);selectedId=o.id;renderList();renderEditor();draw();pushHistory();scheduleAutoSave();
  $('workspaceHint').textContent=`Tillagt: ${o.name}. Redigera placering och storlek i objektpanelen.`;
 }));
@@ -581,6 +613,7 @@ fields.forEach(id=>{
  $(id).addEventListener('input',()=>{draw();scheduleAutoSave()});
 });
 $('layoutMode').addEventListener('change',()=>{ const manual=val('layoutMode')==='manual';$('offset').disabled=!manual;$('offsetY').disabled=!manual;draw();scheduleAutoSave()});
+['A','B','C','D'].forEach(side=>{['follow','custom'].forEach(prefix=>{const el=$(prefix+side);if(el)el.addEventListener('change',()=>{pushHistory();draw();scheduleAutoSave()})});['tileW','tileH'].forEach(prefix=>{const el=$(prefix+side);if(el)el.addEventListener('input',()=>{draw();scheduleAutoSave()})})});
 $('drainAlign').onclick=()=>{
  setView('floor');
  const drain=objects.find(o=>o.view==='floor'&&o.type==='brunn');
@@ -589,11 +622,12 @@ $('drainAlign').onclick=()=>{
  $('workspaceHint').textContent='Foglinjerna går nu genom golvbrunnens centrum i både X- och Y-led.';
 };
 $('offset').disabled=true;$('offsetY').disabled=true;
-function getState(){return {version:1,fields:Object.fromEntries(fields.map(id=>[id,val(id)])),view,objects,nextId};}
+function getState(){return {version:2,fields:Object.fromEntries(fields.map(id=>[id,val(id)])),wallSettings:Object.fromEntries(['followA','followB','followC','followD','customA','customB','customC','customD'].map(id=>[id,$(id).checked])),view,objects,nextId};}
 function applyState(s){
  restoringState=true;
  try{
   if(s.fields)fields.forEach(id=>{if(s.fields[id]!==undefined)$(id).value=s.fields[id]});
+  if(s.wallSettings)Object.entries(s.wallSettings).forEach(([id,v])=>{if($(id))$(id).checked=!!v});
   view=s.view||'floor';objects=Array.isArray(s.objects)?s.objects:[];nextId=s.nextId||Math.max(0,...objects.map(o=>o.id))+1;selectedId=objects.find(o=>o.view===view)?.id||null;
   $('roomShape').dispatchEvent(new Event('change'));$('layoutMode').dispatchEvent(new Event('change'));setView(view);
  }finally{restoringState=false;}
